@@ -9,6 +9,9 @@ if [[ ! "$KEY" =~ [0-9A-E]{8}.virl.info ]]; then
 	echo "you need to provide the key as a parameter to this script!"
 	exit
 fi
+if [[ ! id =~ uid=0 ]]; then
+	echo "you need to run this as root (e.g. run \"sudo $*\")"
+fi
 
 mkdir -p /etc/salt/pki/minion
 cp $KEY minion.pem
