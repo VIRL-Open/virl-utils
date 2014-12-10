@@ -21,6 +21,7 @@ logout and login again to make those changes effective.
 * ```link.py``` needs a MAC address as a parameter and 'up' or 'down', e.g. from running 'show interface gi0/0' in a VM. This will enable or disable the given interface on the VM, like connecting or disconnecting the cable to the router interface. Note: Interface state is not reflected in XRv. 
 * ```list.py``` lists all interfaces of all running nodes / VMs of the user. The username must be given as a parameter to the script. The tap interfaces listed in the right column can be used to capture traffic, see ```capture.bat``` and ```capture.sh```.
 * ```ports.py``` shows all ports (VNC and Console information) of all running instances on a VIRL host. 
+* ```minion-key-reset.sh``` using the provided minion key file as a parameter (example AABBCCDD.virl.info.pem) this script will reset the minion key / configuration on the system. 
 
 Example Output
 ======
