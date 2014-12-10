@@ -20,6 +20,7 @@ openssl rsa -in minion.pem -pubout >minion.pub
 cp -f minion.pem /etc/salt/pki/minion/minion.pem
 cp -f minion.pub /etc/salt/pki/minion/minion.pub
 chmod 400 /etc/salt/pki/minion/minion.pem
+rm minion.pub minion.pem
 
 #
 # write the /etc/salt/minion.d/extra.conf
