@@ -11,6 +11,7 @@ if [[ ! "$KEY" =~ [0-9A-E]{8}.virl.info ]]; then
 fi
 if [[ ! id =~ uid=0 ]]; then
 	echo "you need to run this as root (e.g. run \"sudo $*\")"
+	exit
 fi
 
 mkdir -p /etc/salt/pki/minion
