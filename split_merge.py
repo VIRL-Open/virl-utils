@@ -8,9 +8,39 @@
 
 import sys
 import os.path
+from argparse import RawTextHelpFormatter
+
+description = """
+The order of arguments implies the direction. If the first argument is .virl then it will extract from the first argument into the folder specified by the second.
+If the second argument is .virl then it will merge the configs in the first folder into the second argument.
+The folder to write into must exist.
+
+By default it will try for a file extension of folder/name.cfg where name is the node name in the .virl file, and folder is the second argument. The default extension is .cfg and can be set using the --extension argument.
+
+Extracting:
+    $ python split_merge.py  project@mixed-A1fWuP.virl cfgs
+    Extracting from project@mixed-A1fWuP.virl into cfgs
+    Extracted iosv-1 into cfgs/iosv-1.cfg
+    Extracted iosxrv-1 into cfgs/iosxrv-1.cfg
+    Extracted csr1000v-1 into cfgs/csr1000v-1.cfg
+    Extracted nx-osv-1 into cfgs/nx-osv-1.cfg
+
+Merging:
+    $ python split_merge.py cfgs project@mixed-A1fWuP.virl
+    Merging from cfgs into project@mixed-A1fWuP.virl
+    Merged cfgs/iosv-1.cfg into iosv-1
+    Merged cfgs/iosxrv-1.cfg into iosxrv-1
+    Merged cfgs/csr1000v-1.cfg into csr1000v-1
+    Merged cfgs/nx-osv-1.cfg into nx-osv-1
+    Wrote updated project@mixed-A1fWuP.virl
+
+Caveats:
+- Nested topologies (with sites) may or may not work. They have not been tested.
+- The config extensions element must exist for the node in the target .virl file. If necessary these can be created in VM Maestro by putting in a (random) example string into the "configuration" field so that the node config extension is written to the .virl file.
+"""
 
 import argparse
-parser = argparse.ArgumentParser(description='Split and Merge .virl files')
+parser = argparse.ArgumentParser(description=description, formatter_class=RawTextHelpFormatter)
 parser.add_argument("source", help="Source to extract or merge from")
 parser.add_argument("target", help="Target to extract or merge to")
 parser.add_argument(
