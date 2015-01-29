@@ -1,0 +1,5 @@
+curl --user guest:guest http://172.16.1.1:19399/simengine/rest/list
+curl --user guest:guest http://172.16.1.1:19399/roster/rest/
+curl --data @topology.virl --header 'Content-Type: text/xml' --user guest:guest http://172.16.1.1:19399/simengine/rest/launch
+
+
