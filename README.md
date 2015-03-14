@@ -20,9 +20,10 @@ logout and login again to make those changes effective.
 * ```ipv4.sh``` shows all local interfaces on the VIRL host that have an IPv4 address attached.
 * ```link.py``` needs a MAC address as a parameter and 'up' or 'down', e.g. from running 'show interface gi0/0' in a VM. This will enable or disable the given interface on the VM, like connecting or disconnecting the cable to the router interface. Note: Interface state is not reflected in XRv. 
 * ```list.py``` lists all interfaces of all running nodes / VMs of the user. The username must be given as a parameter to the script. The tap interfaces listed in the right column can be used to capture traffic, see ```capture.bat``` and ```capture.sh```.
-* ```ports.py``` shows all ports (VNC and Console information) of all running instances on a VIRL host. 
+* ```ports.py``` shows all ports (VNC and Console information) of all running instances on a VIRL host. It also includes the Instance name of the libvirt instance which can be manipulated via ```virsh```
 * ```minion-key-reset.sh``` using the provided minion key file as a parameter (example AABBCCDD.virl.info.pem) this script will reset the minion key / configuration on the system. 
 * ```salt-test.py``` helps with troubleshooting Salt key related issues.
+* ```user.sh``` define required libvirtd environment variable for virsh.
 
 Example Output
 ======
@@ -47,16 +48,24 @@ Showing all interfaces of the user guest:
 
 Displaying ports of running simulations:
 
-	virl@virl-sandbox:~$ ./virl-utils/ports.py 
-	+-------+----------+--------+------+---------+
-	| User  | Topology | Node   | VNC  | Console |
-	+-------+----------+--------+------+---------+
-	| guest | single   | iosv-2 | 5900 | 17000   |
-	| guest | single   | iosv-3 | 5901 | 17002   |
-	| guest | single   | iosv-4 | 5902 | 17004   |
-	| guest | single   | linux  | 5903 | 17006   |
-	+-------+----------+--------+------+---------+
-	virl@virl-sandbox:~$ 
+	virl@virl-sandbox:~$ virl-utils/ports.py 
+	+-------+-------------+----------+------+---------+-------------------+
+	| User  | Topology    | Node     | VNC  | Console | Instance Name     |
+	+-------+-------------+----------+------+---------+-------------------+
+	| guest | eugene      | iosxrv-1 | 5900 | 17000   | instance-0000002b |
+	| guest | eugene      | iosxrv-2 | 5902 | 17003   | instance-0000002c |
+	| guest | eugene      | iosxrv-3 | 5901 | 17006   | instance-0000002d |
+	| guest | eugene      | iosxrv-4 | 5903 | 17009   | instance-0000002e |
+	| guest | germany-ers | iosv-1   | 5907 | 17018   | instance-00000032 |
+	| guest | germany-ers | iosv-2   | 5908 | 17020   | instance-00000033 |
+	| guest | germany-ers | iosv-3   | 5909 | 17022   | instance-00000034 |
+	| guest | germany-ers | iosv-4   | 5910 | 17024   | instance-00000035 |
+	| guest | germany-ers | iosv-5   | 5911 | 17026   | instance-00000036 |
+	| guest | germany-ers | iosv-6   | 5912 | 17028   | instance-00000037 |
+	| guest | topology    | iosv-1   | 5904 | 17012   | instance-0000002f |
+	| guest | topology    | iosv-2   | 5905 | 17014   | instance-00000030 |
+	| guest | topology    | iosv-3   | 5906 | 17016   | instance-00000031 |
+	+-------+-------------+----------+------+---------+-------------------+
 
 Enabling / disabling an interface for a given MAC address:
 
