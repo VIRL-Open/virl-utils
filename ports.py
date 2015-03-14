@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 #
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
+#
 # Show all ports of all VM instances for
 # all users and topologies.
 # Like the console port and the VNC port
@@ -30,7 +32,7 @@ def main():
 	nc=Client(username=os.environ['OS_USERNAME'], api_key=os.environ['OS_PASSWORD'], 
 		project_id=os.environ['OS_TENANT_NAME'], auth_url=os.environ['OS_AUTH_URL'])
 
-	pt = prettytable.PrettyTable(["User", "Topology", "Node", "VNC", "Console"])
+	pt = prettytable.PrettyTable(["User", "Topology", "Node", "VNC", "Console", "Instance Name"])
 	pt.align = "l"
 
 	for server in nc.servers.list(search_opts={'all_tenants': True}):
@@ -43,15 +45,19 @@ def main():
 				return 1
 			else:
 				doc=parseString(domain.XMLDesc(flags=0))
-			for i in doc.getElementsByTagName('graphics'):
-				port=i.getAttribute('port')
+			# get the VNC port
+			port=doc.getElementsByTagName('graphics')[0].getAttribute('port')
+			# get the serial console TCP port
 			for i in doc.getElementsByTagName('source'):
 				if i.parentNode.nodeName == u'console':
 					console=i.getAttribute('service')
-			pt.add_row([m.group(1), m.group(3), m.group(4), port, console])
+			# get the instance name
+			name=doc.getElementsByTagName('name')[0].childNodes[0].nodeValue
+			# add info to table
+			pt.add_row([m.group(1), m.group(3), m.group(4), port, console, name])
+
 	print pt.get_string(sortby="Topology")
 
 if __name__ == '__main__':
 	sys.exit(main())
-
 
