@@ -1,5 +1,21 @@
+# get list of all simulations
 curl --user guest:guest http://172.16.1.1:19399/simengine/rest/list
-curl --user guest:guest http://172.16.1.1:19399/roster/rest/
-curl --data @topology.virl --header 'Content-Type: text/xml' --user guest:guest http://172.16.1.1:19399/simengine/rest/launch
 
+# get details about the roster, e.g. running simulations
+curl --user guest:guest http://172.16.1.1:19399/roster/rest/
+
+# start a new simulation, topology is in the file example.virl
+curl --data @example.virl --header "Content-Type: text/xml" \
+	--user guest:guest "http://172.16.1.1:19399/simengine/rest/launch"
+
+# start a new simulation, pass the project- and file name and a wait period, will return a JSON object of the started simulation
+curl --data @example.virl --header "Content-Type: text/xml" \
+	--user guest:guest "http://172.16.1.1:19399/simengine/rest/launch?file=project@example&wait=5"
+
+# start simulation, store simulation ID in SIM_ID 
+# stop the simulation, using the saved simulation ID, wait for 5 seconds, returns a JSON object
+SIM_ID=$(curl --silent --data @example.virl --header "Content-Type: text/xml" \
+	--user guest:guest "http://172.16.1.1:19399/simengine/rest/launch?file=My%20Projects@example")
+
+curl --user guest:guest "http://172.16.1.1:19399/simengine/rest/stop/$SIM_ID?wait=5"
 
