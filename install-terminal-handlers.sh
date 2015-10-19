@@ -199,39 +199,35 @@ if [ -f $GVFS_MOUNTS ]; then
 
 	EOF
 	sudo sed -ire 's/^SchemeAliases=ssh/#\0/' $GVFS_MOUNTS
-	NEED_LOGIN_LOGOUT="yes"
+	NEED_LOGOUT_LOGIN="yes"
 	fi
 fi
 
 
 #
-# fix google chrome 
+# fix Google Chrome and Chromium
 #
-if [ -f .config/google-chrome/Local\ State ]; then
-python -c 'import json
-FILE=".config/google-chrome/Local State"
+
+OLDIFS=$IFS
+IFS=$'\n'
+chromefiles=".config/google-chrome/Local State
+.config/chromium/Local State"
+for file in ${chromefiles}; do
+    if [ -f $file ]; then
+        python -c '
+import json
+FILE="'$file'"
 with open(FILE, "r") as chromeconfig:
-	config = json.loads(chromeconfig.read())
-	config.setdefault("protocol_handler", {"excluded_schemes": {}})
-	for proto in ( u"ssh", u"telnet"):
-		config["protocol_handler"]["excluded_schemes"][proto]=False
+    config = json.loads(chromeconfig.read())
+    config.setdefault("protocol_handler", {"excluded_schemes": {}})
+    for proto in ( u"ssh", u"telnet"):
+        config["protocol_handler"]["excluded_schemes"][proto]=False
 with open(FILE, "w") as chromeconfig:
-	chromeconfig.write(json.dumps(config))
+    chromeconfig.write(json.dumps(config))
 '
-fi
-# too lazy, so just do it again (copy / paste) for chromium
-if [ -f .config/chromium/Local\ State ]; then
-python -c 'import json
-FILE=".config/chromium/Local State"
-with open(FILE, "r") as chromeconfig:
-	config = json.loads(chromeconfig.read())
-	config.setdefault("protocol_handler", {"excluded_schemes": {}})
-	for proto in ( u"ssh", u"telnet"):
-		config["protocol_handler"]["excluded_schemes"][proto]=False
-with open(FILE, "w") as chromeconfig:
-	chromeconfig.write(json.dumps(config))
-'
-fi
+    fi
+done
+IFS=$OLDIFS
 
 
 #
@@ -258,6 +254,8 @@ and you should see a new terminal with the OpenSSH banner text (assuming it is
 running).
 
 EOF
-if [ ! -z "$NEED_LOGIN_LOGOUT" ]; then
+if [ ! -z "$NEED_LOGOUT_LOGIN" ]; then
+	echo
 	echo "IMPORTANT: you must logout and login again to apply the changes!"
+	echo
 fi
