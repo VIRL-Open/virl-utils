@@ -84,7 +84,7 @@ import sys
 from urlparse import urlparse
 from os import system
 
-TERMINAL='/usr/bin/x-terminal-emulator -e "%s"'
+TERMINAL='CHANGEME -e "%s"'
 
 def main(argv):
 	if len(argv) != 2:
@@ -113,6 +113,42 @@ if __name__ == "__main__":
 	sys.exit(main(sys.argv))
 EOF
 chmod u+x ~/bin/terminal-handler
+
+
+#
+# test a list of known terminal emulators
+# take the first one that is in the path
+# otherwise warn the user
+#
+OLDIFS=$IFS
+IFS=$'\n'
+terminalbinaries="x-terminal-emulator
+gnome-terminal
+xterm
+"
+for file in ${terminalbinaries}; do
+    terminal=$(which $file)
+    if [ -n "$terminal"  ]; then
+        break
+    fi
+done
+IFS=$OLDIFS
+if [ -z "$terminal" ]; then
+	cat <<-'EOF'
+	
+	*** WARNING! ***
+
+	We can't figure out your terminal. Please edit the TERMINAL line at the top of
+	your ~/bin/terminal-handler script so that it points to a valid terminal.
+	Before you have done that the ssh:// and telnet:// URIs will not work on your
+	system! Example:
+
+	TERMINAL='/usr/bin/terminator -e "%s"'
+	
+	EOF
+else
+	sed -ie "s#CHANGEME#$terminal#" ~/bin/terminal-handler
+fi
 
 
 #
@@ -207,7 +243,6 @@ fi
 #
 # fix Google Chrome and Chromium
 #
-
 OLDIFS=$IFS
 IFS=$'\n'
 chromefiles=".config/google-chrome/Local State
@@ -251,7 +286,7 @@ Verify functionality using something like:
 	xdg-open telnet://localhost:22
 
 and you should see a new terminal with the OpenSSH banner text (assuming it is
-running).
+running). Also check potential additional output further up!
 
 EOF
 if [ ! -z "$NEED_LOGOUT_LOGIN" ]; then
@@ -259,3 +294,4 @@ if [ ! -z "$NEED_LOGOUT_LOGIN" ]; then
 	echo "IMPORTANT: you must logout and login again to apply the changes!"
 	echo
 fi
+
