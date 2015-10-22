@@ -118,9 +118,8 @@ chmod u+x ~/bin/terminal-handler
 
 
 #
-# test a list of known terminal emulators
-# take the first one that is in the path
-# otherwise warn the user
+# test a list of known terminal emulators take the first one that is in the
+# path otherwise warn the user
 #
 OLDIFS=$IFS
 IFS=$'\n'
