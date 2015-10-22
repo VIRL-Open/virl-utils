@@ -118,9 +118,8 @@ chmod u+x ~/bin/terminal-handler
 
 
 #
-# test a list of known terminal emulators
-# take the first one that is in the path
-# otherwise warn the user
+# test a list of known terminal emulators take the first one that is in the
+# path otherwise warn the user
 #
 OLDIFS=$IFS
 IFS=$'\n'
@@ -142,7 +141,7 @@ if [ -z "$terminal" ]; then
 
 	We can't figure out your terminal application. Please edit the TERMINAL
 	line at the top of the ~/bin/terminal-handler script so that it points to
-	a valid terminal application. Use your favoirte editor to open the script
+	a valid terminal application. Use your favorite editor to open the script
 	and modify the following line:
 
 	TERMINAL='/path/to/your_terminal_application_here -e "%s"'
