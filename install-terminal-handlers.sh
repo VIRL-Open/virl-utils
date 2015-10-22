@@ -38,26 +38,28 @@ fi
 # blurb
 #
 clear
-cat <<'EOF'
-Telnet and SSH handler installation script
+cat <<-'EOF'
 
-This script will install various files and make various configuration changes
-to the MIME system according to the FreeDesktop conventions.  E.g. it will
-install custom URI handlers for SSH and Telnet. It will create a Python handler
-script in ~/bin that actually will start the default terminal application
-(x-terminal-emulator). It will also change some setting for Firefox and Chrome
-/ Chromium so that telnet:// and ssh:// links in web pages will start the
-terminal application.
+	*** Telnet and SSH handler installation script ***
 
-If the GVFS daemon has sftp / ssh registered to handle remote file systems,
-then that setting needs to be changed as well. This requires root privileges as
-this is a system file. All other files and settings are owned by the
-user and thus don't require elevated privileges.
+	This script will install various files and make various configuration
+	changes to the MIME system according to the FreeDesktop conventions.  E.g.
+	it will install custom URI handlers for SSH and Telnet. It will create a
+	Python handler script in ~/bin that actually will start the default
+	terminal application based on your Linux distribution. It will also change
+	some setting for Firefox, Chrome and Chromium; so that telnet:// and
+	ssh:// links in web pages will start the terminal application.
 
-We've tested this with various OS / browser and desktop combinations.  It might
-or might not work with your particular system :)
+	If the GVFS daemon has SFTP or SSH registered to handle remote file
+	systems, then that setting needs to be changed as well. This requires root
+	privileges as this is a system file. All other files and settings are
+	owned by the user and thus do not require elevated privileges.
 
-[Press 'Enter' to continue or Ctrl-C to stop...]
+	NOTE: We have tested this with various OS, browser and desktop
+	combinations but not all. This script might or might not work with your
+	particular system :)
+
+	[Press 'Enter' to continue or Ctrl-C to stop...]
 EOF
 read a
 
@@ -136,16 +138,22 @@ IFS=$OLDIFS
 if [ -z "$terminal" ]; then
 	cat <<-'EOF'
 	
-	*** WARNING! ***
+	*** ATTENTION! ***
 
-	We can't figure out your terminal. Please edit the TERMINAL line at the top of
-	your ~/bin/terminal-handler script so that it points to a valid terminal.
-	Before you have done that the ssh:// and telnet:// URIs will not work on your
-	system! Example:
+	We can't figure out your terminal application. Please edit the TERMINAL
+	line at the top of the ~/bin/terminal-handler script so that it points to
+	a valid terminal application. Use your favoirte editor to open the script
+	and modify the following line:
 
-	TERMINAL='/usr/bin/terminator -e "%s"'
-	
+	TERMINAL='/path/to/your_terminal_application_here -e "%s"'
+
+	ssh:// and telnet:// URIs will not work as intended if the ~/bin/terminal-
+	handler script does not reference a valid terminal application for your
+	system.
+
+	[Press 'Enter' to continue...]
 	EOF
+	read a
 else
 	sed -ie "s#CHANGEME#$terminal#" ~/bin/terminal-handler
 fi
@@ -268,25 +276,27 @@ IFS=$OLDIFS
 #
 # notify user
 #
-cat <<EOF
+cat <<-'EOF'
 
-If you're running LX Ubuntu and the terminals won't open it maybe the case that
-your xdg-open utility can't handle telnet:// and ssh:// URIs.  Chrome uses
-xdg-open, Firefox doesn't. If this affects you then you can apply the provided
-patch in xdg-open.patch using the following command:
+	If you're running LX Ubuntu and the terminals will not open it maybe the
+	case that your xdg-open utility can't handle telnet:// and ssh:// URIs.
+	Chrome uses xdg-open, Firefox does not. If this affects you, then you can
+	apply the provided patch in xdg-open.patch using the following command:
 
-	sudo patch -d/ -p0 <xdg-open.patch
+		sudo patch -d/ -p0 <xdg-open.patch
 
-This will add the ssh and telnet capability to xdg-open for certain desktop
-enviroments. Gnome uses gnome-open or gvs-open which should work out-of-the-
-box.
+	This will fix xdg-open for certain desktop enviroments. Gnome uses gnome-
+	open or gvs-open which should work out-of-the-box.
 
-Verify functionality using something like:
+	Verify functionality using something like:
 
-	xdg-open telnet://localhost:22
+		xdg-open telnet://localhost:22
 
-and you should see a new terminal with the OpenSSH banner text (assuming it is
-running). Also check potential additional output further up!
+	and you should see a new terminal with the OpenSSH banner text. 
+
+	IMPORTANT: SSH must be running on your system and accepting connections on
+	TCP/22 for this to work. If your system does not accept SSH connections,
+	change "localhost" to a system that allows SSH connectivity.
 
 EOF
 if [ ! -z "$NEED_LOGOUT_LOGIN" ]; then
@@ -294,4 +304,3 @@ if [ ! -z "$NEED_LOGOUT_LOGIN" ]; then
 	echo "IMPORTANT: you must logout and login again to apply the changes!"
 	echo
 fi
-
