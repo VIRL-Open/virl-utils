@@ -18,7 +18,7 @@
 APPCATALYST_PREFS="/Library/Preferences/VMware AppCatalyst"
 APPCATALYST_NETCFG="$APPCATALYST_PREFS/networking"
 APPCATALYST_BIN="/opt/vmware/appcatalyst"
-BASHRC="${HOME}/testbashrc"
+BASHRC="${HOME}/.bashrc"
 BASHPROFILE="${HOME}/.bash_profile"
 
 
