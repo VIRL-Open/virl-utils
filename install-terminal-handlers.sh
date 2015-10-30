@@ -231,7 +231,7 @@ EOF
 GVFS_MOUNTS=/usr/share/gvfs/mounts/sftp.mount
 if [ -f $GVFS_MOUNTS ]; then
 	if grep -q ^SchemeAliases=ssh $GVFS_MOUNTS; then
-	cat <<-EOF
+	cat <<-'EOF'
 
 		NOTE: We need to change the GVFS config and therefore we
 		need your password! This is the command we will run as root:
@@ -239,7 +239,7 @@ if [ -f $GVFS_MOUNTS ]; then
 		sed -ire 's/^SchemeAliases=ssh/#\0/' $GVFS_MOUNTS
 
 		(e.g. it will comment out the 'SchemeAliases=ssh' line)
-
+	
 	EOF
 	sudo sed -ire 's/^SchemeAliases=ssh/#\0/' $GVFS_MOUNTS
 	NEED_LOGOUT_LOGIN="yes"
