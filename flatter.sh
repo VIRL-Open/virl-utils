@@ -37,17 +37,17 @@ function add_interface() {
 	    post-up ip link set INTFC promisc on
 	" | sed -e "s/^\t//" -e "s/INTFC/$1/" -e "s/ADDRESS/$2/" -e "s/MASK/$3/")
 
-	echo "@@@ Proposed change:"
-	echo "$change"
-	get_a_yes ok "@@@ apply changes"
-	if [ $ok = "yes" ]; then 
+#	echo "@@@ Proposed change:"
+#	echo "$change"
+#	get_a_yes ok "@@@ apply changes"
+#	if [ $ok = "yes" ]; then 
 		echo "$change" >>/etc/network/interfaces
 		ifconfig $1 0 0 down
 		ifup $1
-	else
-		echo "@@@ not applied."
-		#exit 1
-	fi
+#	else
+#		echo "@@@ not applied."
+#		#exit 1
+#	fi
 }
 
 function restart_neutron() {
@@ -63,35 +63,44 @@ function restart_neutron() {
 }
 
 #
-# "add" / "del"
-# file
-# section
-# varname
-# value
+# 1 "add" / "del"
+# 2 file
+# 3 section
+# 4 varname
+# 5 value 
+# 6 phyname in case we need to rollback
+#
+# 6 is needed when adding since the interface has been brought up at this point
+# it is not needed when removing since then the interface should not be removed
+# when anything goes wrong *prior* to the actual interface as part of this
+# script
 #
 function mod_config() {
 	local var newvar
 
+# mod_config del $BRIDGE_DIR/$BRIDGE_INI linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
+#             1             2                  3                 4                          5              6
+
 	var=$(crudini --get $2 $3 $4)
 	if [ -z $var ]; then
 		echo "@@@ var $4 in section $3 in file $2 not found!"
-		rollback
+		rollback $6
 	fi
 	if [ "$1" = "add" ]; then
 		if [[ "$var" =~ $5 ]]; then
 			echo "@@@ var $4 in section $3 in file $2:"
-			echo "@@@ FLAT network $4 is already there!"
+			echo "@@@ FLAT network $5 is already there!"
 			echo "@@@ can't add. Bailing out..."
-			rollback
+			rollback $6
 		else
 			newvar=$var,$5
 		fi
 	else
 		if ! [[ "$var" =~ $5 ]]; then
 			echo "@@@ var $4 in section $3 in file $2:"
-			echo "@@@ FLAT network $4 is NOT there!"
+			echo "@@@ FLAT network $5 is NOT there!"
 			echo "@@@ can't delete. Bailing out..."
-			rollback
+			rollback $6
 		else
 			newvar=$(echo $var | sed -e 's/\,'$5'//')
 		fi
@@ -101,7 +110,7 @@ function mod_config() {
 		echo "@@@ var $4 in section $3 in file $2:"
 		echo "@@@ setting the value failed!"
 		echo "@@@ bailing out..."
-		rollback
+		rollback $6
 	fi
 }
 
@@ -120,6 +129,8 @@ function remove_flat() {
 	fi
 	echo "@@@ Delete Neutron network $FLAT_NAME"
 	neutron net-delete $FLAT_NAME
+	echo "@@@ Neutron network deleted. Be advised that if things go wrong beyond"
+	echo "@@@ this point your system is probably in an invalid state!"
 
         # change Neutron configuration
         mod_config del $BRIDGE_DIR/$BRIDGE_INI vlans network_vlan_ranges $FLAT_NAME
@@ -127,7 +138,7 @@ function remove_flat() {
         mod_config del $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME
 
 	echo "@@@ Wait a few to allow for network to settle"
-	sleep 2
+	sleep 5
 	ifdown $PHY_NAME
 
 	echo "@@@ Removing interface configuration from /etc/network/interfaces"
@@ -149,9 +160,9 @@ function add_flat() {
 
 	# change Neutron configuration
 	echo "@@@ Changing Neutron configuration"
-	mod_config add $BRIDGE_DIR/$BRIDGE_INI vlans network_vlan_ranges $FLAT_NAME
-	mod_config add $BRIDGE_DIR/$BRIDGE_INI linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME
-	mod_config add $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME
+	mod_config add $BRIDGE_DIR/$BRIDGE_INI vlans network_vlan_ranges $FLAT_NAME $PHY_NAME
+	mod_config add $BRIDGE_DIR/$BRIDGE_INI linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
+	mod_config add $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $PHY_NAME
 
 	restart_neutron
 
@@ -166,7 +177,20 @@ function add_flat() {
 	restart_neutron
 }
 
+#
+# $1 is the phy interface name. it might have been brought up already so we need
+# to bring it down to match the previous state # if empty, no attempt will be
+# made (typically a rollback during --remove)
+#
 function rollback() {
+
+	# just in case it is up in a way:
+	if [ -n "$1" ]; then
+		echo "@@@ Bringing down interface $1"
+		ifdown 2>&1 >/dev/null $1
+		ifconfig 2>&1 >/dev/null $1 down
+	fi
+
 	echo "@@@ Rolling back config files..."
 	cp $BACKUP_DIR/interfaces /etc/network/interfaces
 	cp $BACKUP_DIR/$ML2_INI $ML2_DIR/$ML2_INI
@@ -216,7 +240,7 @@ function usage() {
 
 	Caveats:
 	 Potentially not every invalid parameter mutation will be caught! Be careful!
-	 Prefix length must be < 26.
+	 Prefix length must be <= 26.
 	
 	EOF
 	exit 1
