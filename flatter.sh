@@ -1,15 +1,21 @@
 #!/bin/bash
+# vim: tabstop=4 shiftwidth=4 softtabstop=4
 #
 # create additional flat networks
 # see --help for more information on the parameters
+#
+# v0.2 27-Nov-2015 
+# adapted to Kilo release and made a few changes here and there
+# v0.1 14-Sep-2015
+# initial release
 # 
 # rschmied@cisco.com
 # 
 
 function bail_out() {
-        echo "@@@ $1"
-        echo "@@@ aborted."
-        exit 1
+	echo "@@@ $1"
+	echo "@@@ aborted."
+	exit 1
 }
 
 function get_a_yes() {
@@ -32,95 +38,88 @@ function add_interface() {
 
 	change=$(echo "auto INTFC
 	iface INTFC inet static
-	    address ADDRESS
-	    netmask MASK
-	    post-up ip link set INTFC promisc on
+		address ADDRESS
+		netmask MASK
+		post-up ip link set INTFC promisc on
 	" | sed -e "s/^\t//" -e "s/INTFC/$1/" -e "s/ADDRESS/$2/" -e "s/MASK/$3/")
-
-#	echo "@@@ Proposed change:"
-#	echo "$change"
-#	get_a_yes ok "@@@ apply changes"
-#	if [ $ok = "yes" ]; then 
-		echo "$change" >>/etc/network/interfaces
-		ifconfig $1 0 0 down
-		ifup $1
-#	else
-#		echo "@@@ not applied."
-#		#exit 1
-#	fi
+	sudo sh -c "echo \"$change\" >> /etc/network/interfaces"
+	sudo ifconfig $1 0 0 down
+	sudo ifup $1
 }
 
 function restart_neutron() {
-        echo "@@@ Stopping Neutron services"
-        for i in /etc/init/neutron-*; do service $(basename $i | sed -e 's/.conf//' ) stop; done
-	echo "@@@ wait a bit"
+	echo "@@@ Stopping Neutron services"
+	for i in /etc/init/neutron-*[!.bak]; do sudo service $(basename $i | sed -e 's/.conf//' ) stop; done
+	echo "@@@ Waiting (2s)"
 	sleep 2
-        echo "@@@ Starting Neutron services"
-        for i in /etc/init/neutron-*; do service $(basename $i | sed -e 's/.conf//' ) start; done
-        echo -n "@@@ Waiting "
-        while [[ $(neutron 2>&1 agent-list) =~ failed ]]; do sleep 1; echo -n "."; done
-        echo " done."
+	echo "@@@ Starting Neutron services"
+	for i in /etc/init/neutron-*[!.bak]; do sudo service $(basename $i | sed -e 's/.conf//' ) start; done
+	echo -n "@@@ Waiting "
+	while [[ $(neutron 2>&1 agent-list) =~ Unable\ to\ establish\ connection ]]; do sleep 1; echo -n "."; done
+	echo " done."
 }
+
 
 #
 # 1 "add" / "del"
 # 2 file
 # 3 section
 # 4 varname
-# 5 value 
-# 6 phyname in case we need to rollback
+# 5 value (vlan name or flat network name)
+# 6 phyname to map
 #
 # 6 is needed when adding since the interface has been brought up at this point
 # it is not needed when removing since then the interface should not be removed
 # when anything goes wrong *prior* to the actual interface as part of this
 # script
 #
+# mod_config del $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME $PHY_NAME
+#             1              2                   3               4                        5         6
+
 function mod_config() {
 	local var newvar
 
-# mod_config del $BRIDGE_DIR/$BRIDGE_INI linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
-#             1             2                  3                 4                          5              6
-
-	var=$(crudini --get $2 $3 $4)
+	var=$(crudini --get $2 $3 $4 | tr -d " \t")
 	if [ -z $var ]; then
 		echo "@@@ var $4 in section $3 in file $2 not found!"
 		rollback $6
 	fi
 	if [ "$1" = "add" ]; then
-		if [[ "$var" =~ $5 ]]; then
+		if [[ "$var" =~ (^|,)$5(,|$) ]]; then
 			echo "@@@ var $4 in section $3 in file $2:"
-			echo "@@@ FLAT network $5 is already there!"
+			echo "@@@ value $5 is already there!"
 			echo "@@@ can't add. Bailing out..."
 			rollback $6
-		else
-			newvar=$var,$5
 		fi
-	else
-		if ! [[ "$var" =~ $5 ]]; then
+		newvar="$var,$5"
+	else   ## delete
+		if ! [[ "$var" =~ (^|,)$5(,|$) ]]; then
 			echo "@@@ var $4 in section $3 in file $2:"
-			echo "@@@ FLAT network $5 is NOT there!"
+			echo "@@@ value $5 is NOT there!"
 			echo "@@@ can't delete. Bailing out..."
-			rollback $6
-		else
-			newvar=$(echo $var | sed -e 's/\,'$5'//')
+			# no interface for rollback required
+			rollback
 		fi
+		newvar=$(echo $var | sed -re 's/\,?'$5'//' -e 's/^,//' )
 	fi
-	crudini --set --existing $2 $3 $4 $newvar
+	sudo crudini --set --existing $2 $3 $4 $newvar
 	if [ $? -ne 0 ]; then
 		echo "@@@ var $4 in section $3 in file $2:"
 		echo "@@@ setting the value failed!"
 		echo "@@@ bailing out..."
-		rollback $6
+		# interface only needed when adding
+		[ "$1" = "add" ] && iface=$6
+		rollback $iface
 	fi
 }
 
 
 function remove_flat() {
 	# only proceed if net is there and active
-        if [ -z "$(ip route | grep -e "^$PREFIX dev ")" ]; then
-                echo "@@@ Prefix not in routing table"
-                return
-        fi
+	if [ -z "$(ip route | grep -e "^$PREFIX dev ")" ]; then
+		echo "@@@ Prefix not in routing table"
+		return
+	fi
 
 	# delete net (and implicitely the subnet)
 	if [[ $(neutron 2>&1 net-show $FLAT_NAME) =~ Unable.to.show ]]; then
@@ -132,17 +131,18 @@ function remove_flat() {
 	echo "@@@ Neutron network deleted. Be advised that if things go wrong beyond"
 	echo "@@@ this point your system is probably in an invalid state!"
 
-        # change Neutron configuration
-        mod_config del $BRIDGE_DIR/$BRIDGE_INI vlans network_vlan_ranges $FLAT_NAME
-        mod_config del $BRIDGE_DIR/$BRIDGE_INI linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME
-        mod_config del $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME
+	# change Neutron configuration
+	echo "@@@ Changing Neutron configuration"
+	mod_config del $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
+	mod_config del $NEUTRON_DIR/$NEUTRON_CONF vlans network_vlan_ranges $FLAT_NAME $PHY_NAME
+	mod_config del $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $PHY_NAME
 
-	echo "@@@ Wait a few to allow for network to settle"
+	echo "@@@ Waiting to allow for network to settle (5s)"
 	sleep 5
-	ifdown $PHY_NAME
+	sudo ifdown $PHY_NAME
 
 	echo "@@@ Removing interface configuration from /etc/network/interfaces"
-	sed -i -e "/^auto $PHY_NAME/d" -e "/^iface $PHY_NAME inet static/,+4d" /etc/network/interfaces
+	sudo sed -i -e "/^auto $PHY_NAME/d" -e "/^iface $PHY_NAME inet static/,+4d" /etc/network/interfaces
 
 	restart_neutron
 }
@@ -160,8 +160,8 @@ function add_flat() {
 
 	# change Neutron configuration
 	echo "@@@ Changing Neutron configuration"
-	mod_config add $BRIDGE_DIR/$BRIDGE_INI vlans network_vlan_ranges $FLAT_NAME $PHY_NAME
-	mod_config add $BRIDGE_DIR/$BRIDGE_INI linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
+	mod_config add $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
+	mod_config add $NEUTRON_DIR/$NEUTRON_CONF vlans network_vlan_ranges $FLAT_NAME $PHY_NAME
 	mod_config add $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $PHY_NAME
 
 	restart_neutron
@@ -170,9 +170,9 @@ function add_flat() {
 	echo "@@@ Creating networks"
 	neutron net-create --shared --provider:physical_network=$FLAT_NAME --provider:network_type=flat $FLAT_NAME
 	neutron subnet-create $FLAT_NAME --name $FLAT_NAME \
-	  --allocation-pool start=$DHCP_FIRST,end=$DHCP_LAST \
-	  --gateway $GATEWAY $PREFIX \
-	  --dns-nameservers list=true $NAMESERVERS
+		--allocation-pool start=$DHCP_FIRST,end=$DHCP_LAST \
+		--gateway $GATEWAY $PREFIX \
+		--dns-nameservers list=true $NAMESERVERS
 
 	restart_neutron
 }
@@ -187,14 +187,14 @@ function rollback() {
 	# just in case it is up in a way:
 	if [ -n "$1" ]; then
 		echo "@@@ Bringing down interface $1"
-		ifdown 2>&1 >/dev/null $1
-		ifconfig 2>&1 >/dev/null $1 down
+		sudo ifdown 2>&1 >/dev/null $1
+		sudo ifconfig 2>&1 >/dev/null $1 down
 	fi
 
 	echo "@@@ Rolling back config files..."
-	cp $BACKUP_DIR/interfaces /etc/network/interfaces
-	cp $BACKUP_DIR/$ML2_INI $ML2_DIR/$ML2_INI
-	cp $BACKUP_DIR/$BRIDGE_INI $BRIDGE_DIR/$BRIDGE_INI
+	sudo cp $BACKUP_DIR/interfaces /etc/network/interfaces
+	sudo cp $BACKUP_DIR/$ML2_INI $ML2_DIR
+	sudo cp $BACKUP_DIR/$NEUTRON_CONF $NEUTRON_DIR
 	echo "@@@ Cleaning up"
 	rm -rf $BACKUP
 	bail_out
@@ -251,6 +251,19 @@ function usage() {
 #set -vx
 shopt -s nocasematch;
 
+# which user are we? We need root rights for various changes
+if [[ "$(id)" =~ ^uid=0 ]]; then
+	bail_out "must NOT be run as root or with sudo!"
+fi
+# .bashrc defines the required OS_ variables to authenticate
+if ! [ -f /home/virl/.bashrc ]; then
+	bail_out ".bashrc for virl user does not exist. Is this a VIRL system?"
+#else
+	# without PS1 / prompt set, the .bashrc exits immediately
+	#echo "@@@ Sourcing variables"
+	#PS1="#" && source /home/virl/.bashrc
+fi
+
 # defaults
 NAMESERVERS="8.8.8.8 8.8.4.4"
 DHCP_FIRST="first+50"
@@ -258,49 +271,48 @@ DHCP_LAST="last-2"
 IFACE_IP="last-1"
 GATEWAY="first+1"
 
-PLUGIN_DIR=/etc/neutron/plugins
-BRIDGE_DIR=$PLUGIN_DIR/linuxbridge
-BRIDGE_INI=linuxbridge_conf.ini
-ML2_DIR=$PLUGIN_DIR/ml2
+NEUTRON_DIR=/etc/neutron
+ML2_DIR=$NEUTRON_DIR/plugins/ml2
 ML2_INI=ml2_conf.ini
+NEUTRON_CONF=neutron.conf
 
 # extract options and their arguments into variables.
 TEMP=$(getopt -o d:f:g:hi:l:nr --long dns:,first:,force,gateway:,help,interface:,last:,neutron,remove -n "$0" -- "$@")
 eval set -- "$TEMP"
 while true ; do
-    case "$1" in
-        -d|--dns)
-	    case "$2" in
-		"") shift 2 ;;
-		*) NAMESERVERS=$2 ;  shift 2 ;;
-	    esac ;;
-        -f|--first)
-	    case "$2" in
-		"") shift 2 ;;
-		*) DHCP_FIRST=$2 ;  shift 2 ;;
-	    esac ;;
-	--force) FORCE="yes"; shift ;;
-        -g|--gateway)
-	    case "$2" in
-		"") shift 2 ;;
-		*) GATEWAY=$2 ;  shift 2 ;;
-	    esac ;;
-        -h|--help) usage; shift ;;
-        -i|--interface)
-	    case "$2" in
-		"") shift 2 ;;
-		*) IFACE_IP=$2 ;  shift 2 ;;
-	    esac ;;
-        -l|--last)
-	    case "$2" in
-		"") shift 2 ;;
-		*) DHCP_LAST=$2 ;  shift 2 ;;
-	    esac ;;
-        -n|--neutron) RESTART_NEUTRON="yes"; shift ;;
-        -r|--remove) REMOVE="yes"; shift ;;
-        --) shift ; break ;;
-        *) echo "Internal error!" ; exit 1 ;;
-    esac
+	case "$1" in
+		-d|--dns)
+			case "$2" in
+				"") shift 2 ;;
+				*) NAMESERVERS=$2 ;  shift 2 ;;
+			esac ;;
+		-f|--first)
+			case "$2" in
+				"") shift 2 ;;
+				*) DHCP_FIRST=$2 ;  shift 2 ;;
+			esac ;;
+		--force) FORCE="yes"; shift ;;
+		-g|--gateway)
+			case "$2" in
+				"") shift 2 ;;
+				*) GATEWAY=$2 ;  shift 2 ;;
+			esac ;;
+		-h|--help) usage; shift ;;
+		-i|--interface)
+			case "$2" in
+				"") shift 2 ;;
+				*) IFACE_IP=$2 ;  shift 2 ;;
+			esac ;;
+		-l|--last)
+			case "$2" in
+				"") shift 2 ;;
+				*) DHCP_LAST=$2 ;  shift 2 ;;
+			esac ;;
+		-n|--neutron) RESTART_NEUTRON="yes"; shift ;;
+		-r|--remove) REMOVE="yes"; shift ;;
+		--) shift ; break ;;
+		*) echo "Internal error!" ; exit 1 ;;
+	esac
 done
 
 # special case
@@ -324,7 +336,7 @@ read PREFIX IFACE_NET IFACE_MASK IFACE_MASKLEN IFACE_IP DHCP_FIRST DHCP_LAST GAT
 
 # do we miss anything?
 if [ -z "$PREFIX" -o -z "$IFACE_NET" -o -z "$IFACE_MASK" -o -z "$IFACE_MASKLEN" -o \
-     -z "$IFACE_IP" -o -z "$DHCP_FIRST" -o -z "$DHCP_LAST" -o -z "$GATEWAY" ]; then
+	 -z "$IFACE_IP" -o -z "$DHCP_FIRST" -o -z "$DHCP_LAST" -o -z "$GATEWAY" ]; then
 	usage
 fi
 
@@ -369,9 +381,9 @@ get_a_yes ok "@@@ Go ahead"
 # make backup of files that are going to be changed
 echo "@@@ Making backup for rollback"
 BACKUP_DIR=$(mktemp --dir)
-cp /etc/network/interfaces $BACKUP_DIR/
-cp $ML2_DIR/$ML2_INI $BACKUP_DIR/
-cp $BRIDGE_DIR/$BRIDGE_INI $BACKUP_DIR/
+cp /etc/network/interfaces $BACKUP_DIR
+cp $ML2_DIR/$ML2_INI $BACKUP_DIR
+cp $NEUTRON_DIR/$NEUTRON_CONF $BACKUP_DIR
 
 if [ -z "$REMOVE" ]; then
 	add_flat
