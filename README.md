@@ -19,67 +19,58 @@ logout and login again to make those changes effective.
 * ```con.sh``` connects a Telnet session to the console of a router VM on the local VIRL host. It sets the escape sequence to Ctrl-\ instead of the default Ctrl-]. See also ```ports.py``` to identify the right port.
 * ```ipv4.sh``` shows all local interfaces on the VIRL host that have an IPv4 address attached.
 * ```link.py``` needs a MAC address as a parameter and 'up' or 'down', e.g. from running 'show interface gi0/0' in a VM. This will enable or disable the given interface on the VM, like connecting or disconnecting the cable to the router interface. Note: Interface state is not reflected in XRv. 
-* ```list.py``` lists all interfaces of all running nodes / VMs of the user. The username must be given as a parameter to the script. The tap interfaces listed in the right column can be used to capture traffic, see ```capture.bat``` and ```capture.sh```.
+* ```list.py``` lists all interfaces of all running nodes / VMs of the user. The username can be given as a parameter to the script. The tap interfaces listed in the right column can be used to capture traffic, see ```capture.bat``` and ```capture.sh```.
 * ```ports.py``` shows all ports (VNC and Console information) of all running instances on a VIRL host. It also includes the Instance name of the libvirt instance which can be manipulated via ```virsh```
 * ```minion-key-reset.sh``` using the provided minion key file as a parameter (example AABBCCDD.virl.info.pem) this script will reset the minion key / configuration on the system. 
 * ```salt-test.py``` helps with troubleshooting Salt key related issues.
 * ```user.sh``` define required libvirtd environment variable for virsh.
+* ```flatter.sh``` creates additional external networks a la FLAT and FLAT1. See the ```--help``` function to get more detailed information about the usage.
 
 Example Output
 ======
 Showing all interfaces of the user guest:
 
-	virl@virl-sandbox:~$ ./virl-utils/list.py guest
-	+-------------------+----------+--------+-------------------------+----------------+
-	| Project           | Topology | Node   | Link                    | Interface      |
-	+-------------------+----------+--------+-------------------------+----------------+
-	| Sample_Topologies | Single   | iosv-2 | Multipoint Connection-1 | tap2cff6fb2-5e |
-	|                   |          | iosv-2 | Management Network      | tap3dca55b5-f5 |
-	|                   |          | iosv-2 | snat-1                  | tap6dbe122c-d2 |
-	|                   |          | iosv-3 | Management Network      | tap603b92de-2b |
-	|                   |          | iosv-3 | Multipoint Connection-1 | tapb419d5d7-43 |
-	|                   |          | iosv-4 | Management Network      | tap1473bb05-c8 |
-	|                   |          | iosv-4 | Multipoint Connection-1 | tap9fdfb633-d6 |
-	|                   |          | linux  | Multipoint Connection-1 | tap27fed9a3-cb |
-	|                   |          | linux  | flat-1                  | tap2d7a90b9-b6 |
-	|                   |          | linux  | Management Network      | tap8f62596c-2c |
-	+-------------------+----------+--------+-------------------------+----------------+
-	virl@virl-sandbox:~$ 
+	virl@virl:~$ ./virl-utils/list.py 
+	+---------+----------+-----------+--------------------+----------------+
+	| Project | Topology | Node      | Link               | Interface      |
+	+---------+----------+-----------+--------------------+----------------+
+	| Guest   | Aaaaaa   | server-1  | Management Network | tap1566cc7c-f3 |
+	|         |          | ~mgmt-lxc | Management Network | tap01825caf-28 |
+	|         |          | ~mgmt-lxc | ~lxc-flat          | tapf95a5b9f-30 |
+	|         | Testaa   | lxc-1     | Management Network | tapd9c9d9a5-57 |
+	|         |          | ~mgmt-lxc | Management Network | tap6be5ff64-84 |
+	|         |          | ~mgmt-lxc | ~lxc-flat          | tapa8198bea-59 |
+	| User1   | Polizei  | lxc-1     | Management Network | tap9609e014-99 |
+	|         |          | ~mgmt-lxc | Management Network | tap979bc19d-e0 |
+	|         |          | ~mgmt-lxc | ~lxc-flat          | tap9c53aea5-51 |
+	+---------+----------+-----------+--------------------+----------------+
+
 
 Displaying ports of running simulations:
 
-	virl@virl-sandbox:~$ virl-utils/ports.py 
-	+-------+-------------+----------+------+---------+-------------------+
-	| User  | Topology    | Node     | VNC  | Console | Instance Name     |
-	+-------+-------------+----------+------+---------+-------------------+
-	| guest | eugene      | iosxrv-1 | 5900 | 17000   | instance-0000002b |
-	| guest | eugene      | iosxrv-2 | 5902 | 17003   | instance-0000002c |
-	| guest | eugene      | iosxrv-3 | 5901 | 17006   | instance-0000002d |
-	| guest | eugene      | iosxrv-4 | 5903 | 17009   | instance-0000002e |
-	| guest | germany-ers | iosv-1   | 5907 | 17018   | instance-00000032 |
-	| guest | germany-ers | iosv-2   | 5908 | 17020   | instance-00000033 |
-	| guest | germany-ers | iosv-3   | 5909 | 17022   | instance-00000034 |
-	| guest | germany-ers | iosv-4   | 5910 | 17024   | instance-00000035 |
-	| guest | germany-ers | iosv-5   | 5911 | 17026   | instance-00000036 |
-	| guest | germany-ers | iosv-6   | 5912 | 17028   | instance-00000037 |
-	| guest | topology    | iosv-1   | 5904 | 17012   | instance-0000002f |
-	| guest | topology    | iosv-2   | 5905 | 17014   | instance-00000030 |
-	| guest | topology    | iosv-3   | 5906 | 17016   | instance-00000031 |
-	+-------+-------------+----------+------+---------+-------------------+
+	virl@virl:~$ virl-utils/ports.py 
+	+---------+----------+----------+------+---------+-------------------+
+	| Project | Topology | Node     | VNC  | Console | Instance Name     |
+	+---------+----------+----------+------+---------+-------------------+
+	| guest   | kk       | iosvl2-1 | 5953 | 17003   | instance-0000001b |
+	| guest   | kk       | server-1 | 5950 | 17000   | instance-00000018 |
+	| guest   | kk       | server-2 | 5951 | 17001   | instance-00000019 |
+	| guest   | kk       | server-3 | 5952 | 17002   | instance-0000001a |
+	+---------+----------+----------+------+---------+-------------------+
 
 Enabling / disabling an interface for a given MAC address:
 
-	virl@virl-sandbox:~$ ./virl-utils/link.py fa16.3e3d.0092 down
+	virl@virl:~$ ./virl-utils/link.py fa16.3e3d.0092 down
 	Node Name for MAC 'fa:16:3e:3d:00:92': 
 	</guest/endpoint>-<Sample_Topologies@single-T2IT_U>-<iosv-2>-<guest>
 	Domain Name: 'instance-00000001'
 	Interface updated!
-	virl@virl-sandbox:~$ ./virl-utils/link.py fa16.3e3d.0092 up
+	virl@virl:~$ ./virl-utils/link.py fa16.3e3d.0092 up
 	Node Name for MAC 'fa:16:3e:3d:00:92': 
 	</guest/endpoint>-<Sample_Topologies@single-T2IT_U>-<iosv-2>-<guest>
 	Domain Name: 'instance-00000001'
 	Interface updated!
-	virl@virl-sandbox:~$ 
+	virl@virl:~$ 
 
 
 

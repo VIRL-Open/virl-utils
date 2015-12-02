@@ -5,6 +5,11 @@
 # The tap interfaces can then be used to do a traffic
 # capture locally using tcpdump
 #
+# v0.2 02-Dec-2015 
+# adapted to Kilo release
+# v0.1 24-Nov-2014
+# initial release
+#
 # rschmied@cisco.com
 #
 
@@ -13,53 +18,32 @@ from neutronclient.v2_0 import client
 from operator import itemgetter
 
 
-"""
-
-In [14]: m.group(0)
-Out[14]: '</guest/endpoint>-<Sample_Project@asa-test-topo-yJHnoK>-<iosv-2>-<Multipoint Connection-1>'
-
-In [15]: m.group(1)
-Out[15]: '/guest/endpoint'
-
-In [16]: m.group(2)
-Out[16]: 'Sample_Project'
-
-In [16]: m.group(3)
-Out[16]: 'asa-test-topo'
-
-In [17]: m.group(4)
-Out[17]: 'iosv-2'
-
-In [18]: m.group(5)
-Out[18]: 'Multipoint Connection-1'
-
-will not match jumphost ports!
-not interested in these, anyway
-
-"""
-
+##	 </guest/endpoint>-<testAA-u6dRq3>-<lxc-1>-<guest>
 
 def list_taps(user):
 	out = {}
-	nc = client.Client(username=os.environ['OS_USERNAME'], password=os.environ['OS_PASSWORD'], 
-		tenant_name=os.environ['OS_TENANT_NAME'], auth_url=os.environ['OS_AUTH_URL'])
-	prog = re.compile(r'</(' + user + '/endpoint)>-<(.*)@(.*)-[0-9a-zA-Z_]{6}>-<(.*)>-<(.*)>')
+
+	nc = client.Client(username=os.environ['OS_USERNAME'], password=os.environ['OS_PASSWORD'],
+		tenant_name=os.environ['OS_TENANT_NAME'], auth_url=os.environ['OS_SERVICE_ENDPOINT'])
+
+	prog = re.compile(r'</('+user+')/endpoint>-<(.*)-[0-9a-zA-Z_]{6}>-<(.*)>-<(.*)>')
 	ports = nc.list_ports()
 	for thisport in ports['ports']:
 		m = prog.match(thisport['name'])
+
 		if m:
-			proj = m.group(2)
-			topo = m.group(3)
-			if not proj in out:
-				out[proj] = {}
-			if not topo in out[proj]:
-				out[proj][topo] = []
-			if m.group(5) == user:
+			(user, topo, node, connection) = (m.group(1), m.group(2), m.group(3), m.group(4))
+
+			if not user in out:
+				out[user] = {}
+			if not topo in out[user]:
+				out[user][topo] = []
+			if connection == user:
 				tmp = 'Management Network'
 			else:
-				tmp = m.group(5)
-			out[proj][topo].append({'id': thisport['id'], 
-				'from': m.group(4), 'to': tmp})
+				tmp = connection
+			out[user][topo].append({'id': thisport['id'], 
+				'from': node, 'to': tmp})
 
 	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "Link", "Interface" ])
 	pt.align = "l"
@@ -75,18 +59,16 @@ def list_taps(user):
 				projectname = ""
 				toponame = ""
 	print pt.get_string()
+	return 0
+
 
 def main():
-	if len(sys.argv) != 2:
-		sys.stdout.write(str(sys.argv[0]))
-		print ": username needed as argument! bailing out"
-		return 1		
-	else:
-		list_taps(str(sys.argv[1]).strip())
-		return 0
+	user='.*'
+	if len(sys.argv) == 2:
+		user=str(sys.argv[1]).strip()
+	return list_taps(user)
 
 
 if __name__ == '__main__':
 	sys.exit(main())
-
 

@@ -6,6 +6,11 @@
 # to a VM, the port will be either "shut" (down) 
 # or "no shut" (up).
 #
+# v0.2 02-Dec-2015 
+# adapted to Kilo release
+# v0.1 24-Nov-2014
+# initial release
+#
 # rschmied@cisco.com
 #
 
@@ -43,7 +48,7 @@ def link(mac, state):
 	username    = os.environ['OS_USERNAME']
 	password    = os.environ['OS_PASSWORD']
 	tenant_name = os.environ['OS_TENANT_NAME']
-	auth_url    = os.environ['OS_AUTH_URL']
+	auth_url    = os.environ['OS_SERVICE_ENDPOINT']
 
 	nec   = neutronclient.Client(username=username, password=password, 
 				tenant_name=tenant_name, auth_url=auth_url)
