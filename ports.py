@@ -16,7 +16,7 @@
 
 
 import os, libvirt, re, prettytable, sys
-from novaclient.v2 import Client
+from novaclient import client
 from xml.dom.minidom import parseString
 
 def main():
@@ -35,7 +35,7 @@ def main():
 		libvirt_uri = "qemu:///system"
 	conn=libvirt.openReadOnly(libvirt_uri)
 
-	nc=Client(username=os.environ['OS_USERNAME'], api_key=os.environ['OS_PASSWORD'], 
+	nc=client.Client(2, username=os.environ['OS_USERNAME'], api_key=os.environ['OS_PASSWORD'], 
 	project_id=os.environ['OS_TENANT_NAME'], auth_url=os.environ['OS_SERVICE_ENDPOINT'])
 
 	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "VNC", "Console", "Instance Name"])
