@@ -8,16 +8,16 @@ def launch_topo(topofilename):
 	url       = "http://%s:19399/simengine/rest/launch" % virl_host
 	topo      = open(topofilename, 'r')
 	headers   = {'content-type': 'text/xml'}
-	payload   = {'file': 'manual@launch_topo'}
+	payload   = {'file': "My-Test"}
 
-	result = requests.post(url, auth=(username, password), params=payload, data=topo, headers=headers)
+	result = requests.post(url, auth=(username, password), params=payload, data=topo, headers=headers) 
 	print result.text
 
 
 def main():
 	if len(sys.argv) != 2:
 		sys.stdout.write(str(sys.argv[0]))
-		print ": topology filename needed as argument! bailing out"
+		print ":  usage: lt.py <file.virl>"
 		return 1                
 	else:
 		launch_topo(str(sys.argv[1]).strip())

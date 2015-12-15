@@ -25,6 +25,7 @@ logout and login again to make those changes effective.
 * ```salt-test.py``` helps with troubleshooting Salt key related issues.
 * ```user.sh``` define required libvirtd environment variable for virsh.
 * ```flatter.sh``` creates additional external networks a la FLAT and FLAT1. See the ```--help``` function to get more detailed information about the usage.
+* ```ufw-enable.sh``` enable the User Friendly Firewall. Allow SSH and OpenVPN in, enable Masquerading / NAT / PAT going out on the management interface. Note that there are no safeguards in this script. It is meant to be modified (see top section) to reflect your environment and then modify the system configuration to turn on the firewall. If you want to be safe, study it first.
 
 Example Output
 ======
