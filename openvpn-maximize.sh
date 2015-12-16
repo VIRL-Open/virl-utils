@@ -42,6 +42,8 @@ function get_a_yes() {
 
 cat <<-EOF
 
+	NOTE: START WITH 'sudo -E'
+
 	This script will 'maximize' the OpenVPN connection for your VIRL host. 
 	It assumes that
 
@@ -64,7 +66,8 @@ cat <<-EOF
 	The script will change various system setting and enables the Firewall on the host.
 	This is a DANGEROUS operation if you're remote and something goes wrong!
 
-	If possible, run this on the console!
+	If possible, run this on the console! If service restarts fail (has been observed
+   	on the GUI) a reboot might be in order.
 
 EOF
 
@@ -97,12 +100,15 @@ neutron subnet-update ext-net --dns_nameservers list=true $DNS_SRV1 $DNS_SRV2
 crudini --set /etc/nova/nova.conf DEFAULT serial_port_proxyclient_address 172.16.1.254
 crudini --set /etc/virl/virl.cfg env virl_local_ip 172.16.1.254
 
+# push route
+echo 'push "route 172.16.0.0 255.255.252.0 172.16.1.254"' >>/etc/openvpn/server.conf
+
 # restart services
 service neutron-l3-agent restart
 service nova-serialproxy restart
 service virl-std restart
 service virl-uwm restart
-
+service openvpn restart
 
 # get the network device where the default interface is attached to
 gw=$(ip route | awk '/^default / { for(i=0;i<NF;i++) { if ($i == "dev") { print $(i+1); next; }}}')
