@@ -3,6 +3,8 @@
 #
 # start the User Friendly Firewall on a VIRL host
 #
+# v0.2 16-Dec-2015
+# forwarding policy and input rules changed
 # v0.1 14-Dec-2015
 # initial release
 # 
@@ -40,10 +42,12 @@ COMMIT\n" /etc/ufw/before.rules
 ufw allow in on $gw to any port $SSH_PORT proto tcp
 ufw allow in on $gw to any port $VPN_PORT proto $VPN_PROT
 
-# setting the rule for OpenVPN does not hurt
-# even if OpenVPN is not running
-# device name is statically set to openvpn0
-ufw allow in on openvpn0
+# deny / permit everything else
+ufw deny in on $gw log
+ufw allow from any to any
+
+# allow forwarding of packets
+ufw default allow routed
 
 # get set user rules:
 # sudo grep '^### tuple' /lib/ufw/user*.rules
