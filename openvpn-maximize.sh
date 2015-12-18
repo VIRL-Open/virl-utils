@@ -97,6 +97,7 @@ neutron subnet-update ext-net --gateway_ip 172.16.3.254
 neutron subnet-update ext-net --dns_nameservers list=true $DNS_SRV1 $DNS_SRV2
 
 # change nova serial proxy and STD to listen on FLAT IP
+crudini --set /etc/nova/nova.conf serial_console proxyclient_address 172.16.1.254
 crudini --set /etc/nova/nova.conf DEFAULT serial_port_proxyclient_address 172.16.1.254
 crudini --set /etc/virl/virl.cfg env virl_local_ip 172.16.1.254
 

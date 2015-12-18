@@ -26,6 +26,8 @@ logout and login again to make those changes effective.
 * ```user.sh``` define required libvirtd environment variable for virsh.
 * ```flatter.sh``` creates additional external networks a la FLAT and FLAT1. See the ```--help``` function to get more detailed information about the usage.
 * ```ufw-enable.sh``` enable the User Friendly Firewall. Allow SSH and OpenVPN in, enable Masquerading / NAT / PAT going out on the management interface. Note that there are no safeguards in this script. It is meant to be modified (see top section) to reflect your environment and then modify the system configuration to turn on the firewall. If you want to be safe, study it first.
+* ```openvpn-maximize.sh``` Includes ```ufw-enable.sh``` but does modify the system so that not only the firewall is enabled but also additional routing and system modification allows to use the entire VIRL system via OpenVPN (including console ports, UWM, STD, VM Maestro...).
+* ```openvpn-bridge.sh``` Mac specific script that creates a bridge using the L2 OpenVPN connection and an additional, unused interface on the Mac so that external devices like a switch can be connected to the remote simulation. Modify vars on top of script to reflect actual system. Should be relatively easy to adapt for use on Linux (brctl / or ip link commands)
 
 Example Output
 ======
