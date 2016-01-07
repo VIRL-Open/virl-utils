@@ -43,9 +43,10 @@ def list_taps(user):
 			else:
 				tmp = connection
 			out[user][topo].append({'id': thisport['id'], 
-				'from': node, 'to': tmp})
+				'from': node, 'to': tmp, 'mac': thisport['mac_address'], 
+                                'ip': thisport['fixed_ips'][0]['ip_address']})
 
-	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "Link", "Interface" ])
+	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "Link", "Interface", "Mac Address", "Ip Address"])
 	pt.align = "l"
 	
 	for proj in out:
@@ -55,7 +56,7 @@ def list_taps(user):
 			out[proj][topo].sort(key=itemgetter('from'))
 			for port in out[proj][topo]:
 				pt.add_row([projectname, toponame, port['from'], 
-					port['to'], "tap" + port['id'][0:11]])
+					port['to'], "tap" + port['id'][0:11], port['mac'], port['ip']])
 				projectname = ""
 				toponame = ""
 	print pt.get_string()
@@ -71,4 +72,3 @@ def main():
 
 if __name__ == '__main__':
 	sys.exit(main())
-
