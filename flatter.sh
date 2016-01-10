@@ -4,6 +4,8 @@
 # create additional flat networks
 # see --help for more information on the parameters
 #
+# v0.3 10-Jan-2016
+# added capability to create VLAN based FLAT interfaces
 # v0.2 27-Nov-2015 
 # adapted to Kilo release and made a few changes here and there
 # v0.1 14-Sep-2015
@@ -34,17 +36,31 @@ function get_a_yes() {
 
 # create network entry in /etc/network/interfaces
 function add_interface() {
-	local ok change
+	local change
 
+	if [ -z "$4" ]; then
 	change=$(echo "auto INTFC
 	iface INTFC inet static
 		address ADDRESS
 		netmask MASK
 		post-up ip link set INTFC promisc on
 	" | sed -e "s/^\t//" -e "s/INTFC/$1/" -e "s/ADDRESS/$2/" -e "s/MASK/$3/")
+	else
+	change=$(echo "auto vlanVLAN
+	iface vlanVLAN inet static
+		vlan-raw-device INTFC
+		address ADDRESS
+		netmask MASK
+		post-up ip link set vlanVLAN promisc on
+	" | sed -e "s/^\t//" -e "s/INTFC/$1/" -e "s/ADDRESS/$2/" -e "s/MASK/$3/" -e "s/VLAN/$4/")
+	fi
 	sudo sh -c "echo \"$change\" >> /etc/network/interfaces"
-	sudo ifconfig $1 0 0 down
-	sudo ifup $1
+	if [ -z "$4" ]; then
+		sudo ifconfig $1 0 0 down
+		sudo ifup $1
+	else
+		sudo ifup vlan$4
+	fi
 }
 
 function restart_neutron() {
@@ -115,11 +131,14 @@ function mod_config() {
 
 
 function remove_flat() {
-	# only proceed if net is there and active
-	if [ -z "$(ip route | grep -e "^$PREFIX dev ")" ]; then
-		echo "@@@ Prefix not in routing table"
-		return
-	fi
+    # are we operating with a VLAN?
+    if [ -z "$VLAN" ]; then
+        IFACE=$PHY_NAME
+		DLINES=4
+    else
+        IFACE="vlan$VLAN"
+		DLINES=5
+    fi
 
 	# delete net (and implicitely the subnet)
 	if [[ $(neutron 2>&1 net-show $FLAT_NAME) =~ Unable.to.show ]]; then
@@ -133,16 +152,16 @@ function remove_flat() {
 
 	# change Neutron configuration
 	echo "@@@ Changing Neutron configuration"
-	mod_config del $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
-	mod_config del $NEUTRON_DIR/$NEUTRON_CONF vlans network_vlan_ranges $FLAT_NAME $PHY_NAME
-	mod_config del $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $PHY_NAME
+	mod_config del $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME:$IFACE $IFACE
+	mod_config del $NEUTRON_DIR/$NEUTRON_CONF vlans network_vlan_ranges $FLAT_NAME $IFACE
+	mod_config del $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $IFACE
 
 	echo "@@@ Waiting to allow for network to settle (5s)"
 	sleep 5
-	sudo ifdown $PHY_NAME
+	sudo ifdown $IFACE
 
 	echo "@@@ Removing interface configuration from /etc/network/interfaces"
-	sudo sed -i -e "/^auto $PHY_NAME/d" -e "/^iface $PHY_NAME inet static/,+4d" /etc/network/interfaces
+	sudo sed -i -e "/^auto $IFACE/d" -e "/^iface $IFACE inet static/,+"$DLINES"d" /etc/network/interfaces
 
 	restart_neutron
 }
@@ -151,18 +170,27 @@ function remove_flat() {
 function add_flat() {
 
 	# add interface to system network configuration
-	add_interface $PHY_NAME $IFACE_IP $IFACE_MASK
-	if [ -z "$(ip route | grep -e "^$PREFIX dev $PHY_NAME")" ]; then
+	add_interface $PHY_NAME $IFACE_IP $IFACE_MASK $VLAN
+
+	# are we operating with a VLAN?
+	if [ -z "$VLAN" ]; then
+		IFACE=$PHY_NAME
+	else
+		IFACE="vlan$VLAN"
+	fi
+
+	# check if route is present for interface
+	if [ -z "$(ip route | grep -e "^$PREFIX dev $IFACE")" ]; then
 		echo "@@@ Something went wrong!"
-		echo "@@@ $PHY_NAME seems not to be up with the given prefix $PREFIX"
+		echo "@@@ $IFACE seems not to be up with the given prefix $PREFIX"
 		rollback
 	fi
 
 	# change Neutron configuration
 	echo "@@@ Changing Neutron configuration"
-	mod_config add $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME:$PHY_NAME $PHY_NAME
-	mod_config add $NEUTRON_DIR/$NEUTRON_CONF vlans network_vlan_ranges $FLAT_NAME $PHY_NAME
-	mod_config add $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $PHY_NAME
+	mod_config add $NEUTRON_DIR/$NEUTRON_CONF linux_bridge physical_interface_mappings $FLAT_NAME:$IFACE $IFACE
+	mod_config add $NEUTRON_DIR/$NEUTRON_CONF vlans network_vlan_ranges $FLAT_NAME $IFACE
+	mod_config add $ML2_DIR/$ML2_INI ml2_type_flat flat_networks $FLAT_NAME $IFACE
 
 	restart_neutron
 
@@ -217,6 +245,7 @@ function usage() {
 	 -l, --last		Last IP of DHCP scope, relative to prefix
 	 -n, --neutron		Restart Neutron services (as a single option only)
 	 -r, --remove		Remove specified flat network, other options ignored
+	 -v, --vlan		Create FLAT using a VLAN interface of the given interface
 
 	Examples:
 	 $name eth1 flat3 172.16.6.0/24
@@ -226,6 +255,7 @@ function usage() {
 	 $name eth1 flat5 172.16.20.0/22 --dns="1.2.3.4 5.6.7.8"
 	 $name eth1 flat5 172.16.20.0/22 -d 1.2.3.4
 	 $name eth1 flat5 172.16.20.0/22 --remove
+	 $name eth1 vlan99 10.10.99.0/24 --vlan 100
 	 $name --neutron
 	
 	Defaults:
@@ -277,7 +307,7 @@ ML2_INI=ml2_conf.ini
 NEUTRON_CONF=neutron.conf
 
 # extract options and their arguments into variables.
-TEMP=$(getopt -o d:f:g:hi:l:nr --long dns:,first:,force,gateway:,help,interface:,last:,neutron,remove -n "$0" -- "$@")
+TEMP=$(getopt -o d:f:g:hi:l:nrv: --long dns:,first:,force,gateway:,help,interface:,last:,neutron,remove,vlan: -n "$0" -- "$@")
 eval set -- "$TEMP"
 while true ; do
 	case "$1" in
@@ -310,6 +340,11 @@ while true ; do
 			esac ;;
 		-n|--neutron) RESTART_NEUTRON="yes"; shift ;;
 		-r|--remove) REMOVE="yes"; shift ;;
+		-v|--vlan)
+			case "$2" in
+				"") shift 2 ;;
+				*) VLAN=$2 ;  shift 2 ;;
+			esac ;;
 		--) shift ; break ;;
 		*) echo "Internal error!" ; exit 1 ;;
 	esac
@@ -346,22 +381,32 @@ if [ $IFACE_MASKLEN -gt 26 ]; then
 fi
 
 # input check 
+if [ -z "$VLAN" ]; then
+	IFACE=$PHY_NAME
+else
+	IFACE="vlan$VLAN"
+fi
 if [ -n "$REMOVE" -a -z "$FORCE" ]; then
-	l=$(brctl show | grep -e "$PHY_NAME")
-	[ -z "$l" ] && bail_out "device $PHY_NAME NOT present on any bridge"
+	[ -z "$(brctl show | grep -e "$IFACE")" ] && bail_out "device $IFACE NOT present on any bridge"
+    [ -z "$(ip route | grep -e "^$PREFIX dev ")" ] && bail_out "Prefix not in routing table"
 	re="$PREFIX dev $(echo $l | cut -d' ' -f1)"
-	! [[ "$(ip route)" =~ $re ]] && bail_out "bridge with $PHY_NAME and $PREFIX do not match" 
+	! [[ "$(ip route)" =~ $re ]] && bail_out "bridge with $IFACE and $PREFIX do not match" 
 	[[ "$(neutron 2>&1 net-show $FLAT_NAME)" =~ "Unable to find network" ]] && bail_out "Neutron net $FLAT_NAME unknown"
 	! [[ "$(neutron 2>&1 subnet-show "$FLAT_NAME")" =~ cidr.*$PREFIX ]] && bail_out "Neutron subnet $FLAT_NAME does not match $PREFIX"
 elif [ -z "$REMOVE" ]; then
 	[[ "$(ifconfig 2>&1 $PHY_NAME)" =~ "$PHY_NAME: error fetching interface information: Device not found" ]] && bail_out "device $PHY_NAME is not valid"
-	[ -n "$(ip route | grep -e "dev $PHY_NAME")" ] && bail_out "device $PHY_NAME present in routing table"
-	[ -n "$(brctl show | grep -e "$PHY_NAME")" ] && bail_out "device $PHY_NAME present on a bridge"
+	[ -n "$(ip route | grep -e "dev $IFACE")" ] && bail_out "device $IFACE present in routing table"
+	[ -n "$(brctl show | grep -e "$IFACE")" ] && bail_out "device $IFACE present on a bridge"
 fi
 
 # check with user
 echo "@@@ What we've got so far:"
-echo -e "Interface name:    $PHY_NAME"
+if [ -z "$VLAN" ]; then
+	echo -e "Interface name:    $PHY_NAME"
+else	
+	echo -e "Interface name:    $IFACE"
+	echo -e "Base Interface:    $PHY_NAME"
+fi
 echo -e "Net/Subnet Name:   $FLAT_NAME"
 echo -e "IP Prefix:         $PREFIX"
 if [ -z "$REMOVE" ]; then
