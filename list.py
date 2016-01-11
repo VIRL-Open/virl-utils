@@ -43,10 +43,9 @@ def list_taps(user):
 			else:
 				tmp = connection
 			out[user][topo].append({'id': thisport['id'], 
-				'from': node, 'to': tmp, 'mac': thisport['mac_address'], 
-                                'ip': thisport['fixed_ips'][0]['ip_address']})
+				'from': node, 'to': tmp, 'mac': thisport['mac_address']})
 
-	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "Link", "Interface", "Mac Address", "Ip Address"])
+	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "Link", "Interface", "MAC Address"])
 	pt.align = "l"
 	
 	for proj in out:
