@@ -23,7 +23,7 @@ if [ $# == 0 ]; then
 fi
 
 HOST=172.16.1.1
-PORT=22222
+PORT=22
 USER=virl
 FIFO=/tmp/remotecapture.fifo
 
