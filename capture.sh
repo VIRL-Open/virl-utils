@@ -23,6 +23,7 @@ if [ $# == 0 ]; then
 fi
 
 HOST=172.16.1.1
+PORT=22222
 USER=virl
 FIFO=/tmp/remotecapture.fifo
 
@@ -34,7 +35,7 @@ fi
 
 # make sure the param is indeed a tap interface
 if [[ "$1" =~ ^tap[0-9a-f]{8}-[0-9a-f]{2}$ ]]; then
-  /usr/bin/ssh -n >$FIFO $USER@$HOST sudo stdbuf -o0 tcpdump -w- -s0 -vni $1 
+  /usr/bin/ssh -n >$FIFO -p $PORT $USER@$HOST sudo stdbuf -o0 tcpdump -w- -s0 -vni $1 
 else
   echo "$1 does not look like a tap interface"
 fi
