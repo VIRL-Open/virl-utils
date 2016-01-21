@@ -7,6 +7,8 @@
 # The tap interfaces can then be used to do a traffic
 # capture locally using tcpdump
 #
+# v0.4 20-Jan-2016
+# - added capability to select columns from table
 # v0.3 02-Dec-2015 
 # - changed regex to work with webeditor topologies (w/o 6-digit random id)
 # - added IP column for non-infrastructure ports
@@ -19,7 +21,7 @@
 # rschmied@cisco.com
 #
 
-import sys, re, os, prettytable
+import sys, re, os, prettytable, argparse
 from neutronclient.v2_0 import client
 from operator import itemgetter
 
@@ -29,7 +31,30 @@ from operator import itemgetter
 # </guest/endpoint>-<jjj>-<~mgmt-lxc>-<~lxc-flat>
 # </guest/endpoint>-<testAA-u6dRq3>-<lxc-1>-<guest>
 
-def list_taps(project):
+def hyphen_range(s):
+    """ yield each integer from a complex range string like "1-9,12, 15-20,23"
+        http://code.activestate.com/recipes/577279-generate-list-of-numbers-from-hyphenated-and-comma/
+
+    >>> list(hyphen_range('1-9,12, 15-20,23'))
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 15, 16, 17, 18, 19, 20, 23]
+
+    >>> list(hyphen_range('1-9,12, 15-20,2-3-4'))
+    Traceback (most recent call last):
+        ...
+    ValueError: format error in 2-3-4
+    """
+    for x in s.split(','):
+        elem = x.split('-')
+        if len(elem) == 1: # a number
+            yield int(elem[0])
+        elif len(elem) == 2: # a range inclusive
+            start, end = map(int, elem)
+            for i in xrange(start, end+1):
+                yield i
+        else: # more than one hyphen
+            raise ValueError('format error in %s' % x)
+
+def list_taps(project, fields):
 	out = {}
 
 	nc = client.Client(username=os.environ['OS_USERNAME'], password=os.environ['OS_PASSWORD'],
@@ -69,15 +94,23 @@ def list_taps(project):
 				if len(toponame) > 0:
 					toponame = ""
 					projectname = ""
-	print pt
+        columns = pt.field_names
+        if fields:
+            columns = []
+            for i in list(hyphen_range(fields)):
+                columns.append(pt.field_names[i-1])
+	print pt.get_string(fields = columns)
 	return 0
 
 
 def main():
-	project='.*'
-	if len(sys.argv) == 2:
-		project=str(sys.argv[1]).strip()
-	return list_taps(project)
+        parser = argparse.ArgumentParser()
+        parser.add_argument('project', default = '.*', nargs = '?', 
+			help = "project name to list, all projects if ommited")
+        parser.add_argument('--columns', '-c', 
+			help = "list of column numbers to print. like 1,2,4-7")
+        args = parser.parse_args()
+	return list_taps(args.project, args.columns)
 
 
 if __name__ == '__main__':
