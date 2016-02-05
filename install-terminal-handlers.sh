@@ -72,6 +72,7 @@ sed -e "s#HOME#"${HOME}"/bin#" >$APPS/terminal.desktop <<-'EOF'
 	[Desktop Entry]
 	Name=terminal
 	Terminal=false
+	NoDisplay=true
 	Type=Application
 	Exec=HOME/terminal-handler %U
 	MimeType=x-scheme-handler/ssh;x-scheme-handler/telnet;
