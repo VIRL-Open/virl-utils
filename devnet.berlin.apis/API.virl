@@ -1,0 +1,1579 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<topology xmlns="http://www.cisco.com/VIRL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" schemaVersion="0.9" xsi:schemaLocation="http://www.cisco.com/VIRL https://raw.github.com/CiscoVIRL/schema/v0.9/virl.xsd">
+    <node name="Seattle" type="SIMPLE" subtype="IOSv" location="131,39" ipv4="192.168.0.1">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">10</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">1.1.1.1</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RRC</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="AutoNetkit.ospf_area" type="String">11</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Seattle
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.1 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Boston
+  ip address 10.0.0.2 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Atlanta
+  ip address 10.0.0.17 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 10
+  network 192.168.0.1 0.0.0.0 area 11
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.0.0.0 0.0.0.3 area 11
+  network 10.0.0.16 0.0.0.3 area 11
+!
+!
+router bgp 10
+  bgp router-id 192.168.0.1
+  no synchronization
+! ibgp
+  ! ibgp route reflector servers
+  !
+  neighbor 192.168.0.2 remote-as 10
+  neighbor 192.168.0.2 description rr parent Atlanta
+  neighbor 192.168.0.2 update-source Loopback0
+  !
+  neighbor 192.168.0.4 remote-as 10
+  neighbor 192.168.0.4 description rr parent Boston
+  neighbor 192.168.0.4 update-source Loopback0
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.1 mask 255.255.255.255
+  neighbor 192.168.0.2 activate
+  neighbor 192.168.0.4 activate
+ exit-address-family
+!
+!
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.0.0.2" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.0.0.17" netPrefixLenV4="30"/>
+    </node>
+    <node name="Denver" type="SIMPLE" subtype="IOSv" location="127,132" ipv4="192.168.0.5">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">10</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">1.1.1.1</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RRC</entry>
+            <entry key="AutoNetkit.ospf_area" type="String">12</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Denver
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.5 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Boston
+  ip address 10.0.128.2 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Atlanta
+  ip address 10.0.128.5 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 10
+  network 192.168.0.5 0.0.0.0 area 12
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.0.128.0 0.0.0.3 area 12
+  network 10.0.128.4 0.0.0.3 area 12
+!
+!
+router bgp 10
+  bgp router-id 192.168.0.5
+  no synchronization
+! ibgp
+  ! ibgp route reflector servers
+  !
+  neighbor 192.168.0.2 remote-as 10
+  neighbor 192.168.0.2 description rr parent Atlanta
+  neighbor 192.168.0.2 update-source Loopback0
+  !
+  neighbor 192.168.0.4 remote-as 10
+  neighbor 192.168.0.4 description rr parent Boston
+  neighbor 192.168.0.4 update-source Loopback0
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.5 mask 255.255.255.255
+  neighbor 192.168.0.2 activate
+  neighbor 192.168.0.4 activate
+ exit-address-family
+!
+!
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.0.128.2" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.0.128.5" netPrefixLenV4="30"/>
+    </node>
+    <node name="Dallas" type="SIMPLE" subtype="IOSv" location="127,219" ipv4="192.168.0.3">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">10</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">1.1.1.1</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RRC</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="AutoNetkit.ospf_area" type="String">13</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Dallas
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.3 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Atlanta
+  ip address 10.0.128.10 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Boston
+  ip address 10.0.128.14 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 10
+  network 192.168.0.3 0.0.0.0 area 13
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.0.128.8 0.0.0.3 area 13
+  network 10.0.128.12 0.0.0.3 area 13
+!
+!
+router bgp 10
+  bgp router-id 192.168.0.3
+  no synchronization
+! ibgp
+  ! ibgp route reflector servers
+  !
+  neighbor 192.168.0.2 remote-as 10
+  neighbor 192.168.0.2 description rr parent Atlanta
+  neighbor 192.168.0.2 update-source Loopback0
+  !
+  neighbor 192.168.0.4 remote-as 10
+  neighbor 192.168.0.4 description rr parent Boston
+  neighbor 192.168.0.4 update-source Loopback0
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.3 mask 255.255.255.255
+  neighbor 192.168.0.2 activate
+  neighbor 192.168.0.4 activate
+ exit-address-family
+!
+!
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.0.128.10" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.0.128.14" netPrefixLenV4="30"/>
+    </node>
+    <node name="Atlanta" type="SIMPLE" subtype="IOSv" location="261,160" ipv4="192.168.0.2">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">10</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">1.1.1.1</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RR</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Atlanta
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.2 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Denver
+  ip address 10.0.128.6 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Dallas
+  ip address 10.0.128.9 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/3
+  description to Boston
+  ip address 10.0.0.6 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/4
+  description to Seattle
+  ip address 10.0.0.18 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/5
+  description to London
+  ip address 10.0.0.13 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/6
+  description to Paris
+  ip address 10.1.0.13 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 10
+  network 192.168.0.2 0.0.0.0 area 0
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.0.128.4 0.0.0.3 area 12
+  network 10.0.128.8 0.0.0.3 area 13
+  network 10.0.0.4 0.0.0.3 area 0
+  network 10.0.0.16 0.0.0.3 area 11
+!
+!
+router bgp 10
+  bgp router-id 192.168.0.2
+  no synchronization
+! ibgp
+  ! ibgp clients
+  !
+  neighbor 192.168.0.3 remote-as 10
+  neighbor 192.168.0.3 description rr client Dallas
+  neighbor 192.168.0.3 update-source Loopback0
+  !
+  neighbor 192.168.0.5 remote-as 10
+  neighbor 192.168.0.5 description rr client Denver
+  neighbor 192.168.0.5 update-source Loopback0
+  !
+  neighbor 192.168.0.1 remote-as 10
+  neighbor 192.168.0.1 description rr client Seattle
+  neighbor 192.168.0.1 update-source Loopback0
+  ! ibgp peers
+  !
+  neighbor 192.168.0.4 remote-as 10
+  neighbor 192.168.0.4 description iBGP peer Boston
+  neighbor 192.168.0.4 update-source Loopback0
+!
+! ebgp
+  !
+  neighbor 10.0.0.14 remote-as 20
+  neighbor 10.0.0.14 description eBGP to London
+  !
+  neighbor 10.1.0.14 remote-as 20
+  neighbor 10.1.0.14 description eBGP to Paris
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.2 mask 255.255.255.255
+  network 10.0.0.0 mask 255.255.255.240
+  network 10.0.0.16 mask 255.255.255.252
+  network 10.0.128.0 mask 255.255.255.240
+  network 10.1.0.12 mask 255.255.255.252
+  network 10.1.128.0 mask 255.255.255.252
+  neighbor 192.168.0.4 activate
+  neighbor 192.168.0.4 next-hop-self
+  neighbor 192.168.0.3 activate
+  neighbor 192.168.0.3 next-hop-self
+  neighbor 192.168.0.3 route-reflector-client
+  neighbor 192.168.0.5 activate
+  neighbor 192.168.0.5 next-hop-self
+  neighbor 192.168.0.5 route-reflector-client
+  neighbor 192.168.0.1 activate
+  neighbor 192.168.0.1 next-hop-self
+  neighbor 192.168.0.1 route-reflector-client
+  neighbor 10.0.0.14 activate
+  neighbor 10.0.0.14 send-community
+  neighbor 10.0.0.14 next-hop-self
+  neighbor 10.1.0.14 activate
+  neighbor 10.1.0.14 send-community
+  neighbor 10.1.0.14 next-hop-self
+ exit-address-family
+!
+!
+ip route 10.0.0.0 255.255.255.240 Null0 254
+ip route 10.0.0.16 255.255.255.252 Null0 254
+ip route 10.0.128.0 255.255.255.240 Null0 254
+ip route 10.1.0.12 255.255.255.252 Null0 254
+ip route 10.1.128.0 255.255.255.252 Null0 254
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.0.128.6" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.0.128.9" netPrefixLenV4="30"/>
+        <interface id="2" name="GigabitEthernet0/3" ipv4="10.0.0.6" netPrefixLenV4="30"/>
+        <interface id="3" name="GigabitEthernet0/4" ipv4="10.0.0.18" netPrefixLenV4="30"/>
+        <interface id="4" name="GigabitEthernet0/5" ipv4="10.0.0.13" netPrefixLenV4="30"/>
+        <interface id="5" name="GigabitEthernet0/6" ipv4="10.1.0.13" netPrefixLenV4="30"/>
+    </node>
+    <node name="Paris" type="SIMPLE" subtype="IOSv" location="412,165" ipv4="192.168.0.11">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">20</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">2.2.2.2</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RR</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Paris
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.11 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Boston
+  ip address 10.1.128.2 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Atlanta
+  ip address 10.1.0.14 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/3
+  description to Vienna
+  ip address 10.1.0.17 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/4
+  description to London
+  ip address 10.1.0.2 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/5
+  description to Milan
+  ip address 10.1.128.6 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/6
+  description to Berlin
+  ip address 10.1.0.22 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 20
+  network 192.168.0.11 0.0.0.0 area 0
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.1.0.16 0.0.0.3 area 22
+  network 10.1.0.0 0.0.0.3 area 0
+  network 10.1.128.4 0.0.0.3 area 23
+  network 10.1.0.20 0.0.0.3 area 21
+!
+!
+router bgp 20
+  bgp router-id 192.168.0.11
+  no synchronization
+! ibgp
+  ! ibgp clients
+  !
+  neighbor 192.168.0.12 remote-as 20
+  neighbor 192.168.0.12 description rr client Berlin
+  neighbor 192.168.0.12 update-source Loopback0
+  !
+  neighbor 192.168.0.13 remote-as 20
+  neighbor 192.168.0.13 description rr client Milan
+  neighbor 192.168.0.13 update-source Loopback0
+  !
+  neighbor 192.168.0.10 remote-as 20
+  neighbor 192.168.0.10 description rr client Vienna
+  neighbor 192.168.0.10 update-source Loopback0
+  ! ibgp peers
+  !
+  neighbor 192.168.0.9 remote-as 20
+  neighbor 192.168.0.9 description iBGP peer London
+  neighbor 192.168.0.9 update-source Loopback0
+!
+! ebgp
+  !
+  neighbor 10.1.0.13 remote-as 10
+  neighbor 10.1.0.13 description eBGP to Atlanta
+  !
+  neighbor 10.1.128.1 remote-as 10
+  neighbor 10.1.128.1 description eBGP to Boston
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.11 mask 255.255.255.255
+  network 10.1.0.0 mask 255.255.255.248
+  network 10.1.0.8 mask 255.255.255.252
+  network 10.1.0.16 mask 255.255.255.248
+  network 10.1.0.24 mask 255.255.255.252
+  network 10.1.128.4 mask 255.255.255.252
+  neighbor 192.168.0.9 activate
+  neighbor 192.168.0.9 next-hop-self
+  neighbor 192.168.0.12 activate
+  neighbor 192.168.0.12 next-hop-self
+  neighbor 192.168.0.12 route-reflector-client
+  neighbor 192.168.0.13 activate
+  neighbor 192.168.0.13 next-hop-self
+  neighbor 192.168.0.13 route-reflector-client
+  neighbor 192.168.0.10 activate
+  neighbor 192.168.0.10 next-hop-self
+  neighbor 192.168.0.10 route-reflector-client
+  neighbor 10.1.0.13 activate
+  neighbor 10.1.0.13 send-community
+  neighbor 10.1.0.13 next-hop-self
+  neighbor 10.1.128.1 activate
+  neighbor 10.1.128.1 send-community
+  neighbor 10.1.128.1 next-hop-self
+ exit-address-family
+!
+!
+ip route 10.1.0.0 255.255.255.248 Null0 254
+ip route 10.1.0.8 255.255.255.252 Null0 254
+ip route 10.1.0.16 255.255.255.248 Null0 254
+ip route 10.1.0.24 255.255.255.252 Null0 254
+ip route 10.1.128.4 255.255.255.252 Null0 254
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.1.128.2" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.1.0.14" netPrefixLenV4="30"/>
+        <interface id="2" name="GigabitEthernet0/3" ipv4="10.1.0.17" netPrefixLenV4="30"/>
+        <interface id="3" name="GigabitEthernet0/4" ipv4="10.1.0.2" netPrefixLenV4="30"/>
+        <interface id="4" name="GigabitEthernet0/5" ipv4="10.1.128.6" netPrefixLenV4="30"/>
+        <interface id="5" name="GigabitEthernet0/6" ipv4="10.1.0.22" netPrefixLenV4="30"/>
+    </node>
+    <node name="Berlin" type="SIMPLE" subtype="IOSv" location="520,37" ipv4="192.168.0.12">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">20</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">2.2.2.2</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RRC</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="AutoNetkit.ospf_area" type="String">21</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Berlin
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.12 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to London
+  ip address 10.1.0.5 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Paris
+  ip address 10.1.0.21 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 20
+  network 192.168.0.12 0.0.0.0 area 21
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.1.0.4 0.0.0.3 area 21
+  network 10.1.0.20 0.0.0.3 area 21
+!
+!
+router bgp 20
+  bgp router-id 192.168.0.12
+  no synchronization
+! ibgp
+  ! ibgp route reflector servers
+  !
+  neighbor 192.168.0.9 remote-as 20
+  neighbor 192.168.0.9 description rr parent London
+  neighbor 192.168.0.9 update-source Loopback0
+  !
+  neighbor 192.168.0.11 remote-as 20
+  neighbor 192.168.0.11 description rr parent Paris
+  neighbor 192.168.0.11 update-source Loopback0
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.12 mask 255.255.255.255
+  neighbor 192.168.0.9 activate
+  neighbor 192.168.0.11 activate
+ exit-address-family
+!
+!
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.1.0.5" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.1.0.21" netPrefixLenV4="30"/>
+    </node>
+    <node name="Vienna" type="SIMPLE" subtype="IOSv" location="520,135" ipv4="192.168.0.10">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">20</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">2.2.2.2</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RRC</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="AutoNetkit.ospf_area" type="String">22</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Vienna
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.10 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to London
+  ip address 10.1.0.26 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Paris
+  ip address 10.1.0.18 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 20
+  network 192.168.0.10 0.0.0.0 area 22
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.1.0.24 0.0.0.3 area 22
+  network 10.1.0.16 0.0.0.3 area 22
+!
+!
+router bgp 20
+  bgp router-id 192.168.0.10
+  no synchronization
+! ibgp
+  ! ibgp route reflector servers
+  !
+  neighbor 192.168.0.9 remote-as 20
+  neighbor 192.168.0.9 description rr parent London
+  neighbor 192.168.0.9 update-source Loopback0
+  !
+  neighbor 192.168.0.11 remote-as 20
+  neighbor 192.168.0.11 description rr parent Paris
+  neighbor 192.168.0.11 update-source Loopback0
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.10 mask 255.255.255.255
+  neighbor 192.168.0.9 activate
+  neighbor 192.168.0.11 activate
+ exit-address-family
+!
+!
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.1.0.26" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.1.0.18" netPrefixLenV4="30"/>
+    </node>
+    <node name="Milan" type="SIMPLE" subtype="IOSv" location="521,230" ipv4="192.168.0.13">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">20</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">2.2.2.2</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RRC</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="AutoNetkit.ospf_area" type="String">23</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Milan
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.13 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to London
+  ip address 10.1.0.9 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Paris
+  ip address 10.1.128.5 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 20
+  network 192.168.0.13 0.0.0.0 area 23
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.1.0.8 0.0.0.3 area 23
+  network 10.1.128.4 0.0.0.3 area 23
+!
+!
+router bgp 20
+  bgp router-id 192.168.0.13
+  no synchronization
+! ibgp
+  ! ibgp route reflector servers
+  !
+  neighbor 192.168.0.9 remote-as 20
+  neighbor 192.168.0.9 description rr parent London
+  neighbor 192.168.0.9 update-source Loopback0
+  !
+  neighbor 192.168.0.11 remote-as 20
+  neighbor 192.168.0.11 description rr parent Paris
+  neighbor 192.168.0.11 update-source Loopback0
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.13 mask 255.255.255.255
+  neighbor 192.168.0.9 activate
+  neighbor 192.168.0.11 activate
+ exit-address-family
+!
+!
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.1.0.9" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.1.128.5" netPrefixLenV4="30"/>
+    </node>
+    <node name="Boston" type="SIMPLE" subtype="IOSv" location="261,98" ipv4="192.168.0.4">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">10</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">1.1.1.1</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RR</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname Boston
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.4 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Seattle
+  ip address 10.0.0.1 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Denver
+  ip address 10.0.128.1 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/3
+  description to Dallas
+  ip address 10.0.128.13 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/4
+  description to Atlanta
+  ip address 10.0.0.5 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/5
+  description to Paris
+  ip address 10.1.128.1 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/6
+  description to London
+  ip address 10.0.0.9 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 10
+  network 192.168.0.4 0.0.0.0 area 0
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.0.0.0 0.0.0.3 area 11
+  network 10.0.128.0 0.0.0.3 area 12
+  network 10.0.128.12 0.0.0.3 area 13
+  network 10.0.0.4 0.0.0.3 area 0
+!
+!
+router bgp 10
+  bgp router-id 192.168.0.4
+  no synchronization
+! ibgp
+  ! ibgp clients
+  !
+  neighbor 192.168.0.3 remote-as 10
+  neighbor 192.168.0.3 description rr client Dallas
+  neighbor 192.168.0.3 update-source Loopback0
+  !
+  neighbor 192.168.0.5 remote-as 10
+  neighbor 192.168.0.5 description rr client Denver
+  neighbor 192.168.0.5 update-source Loopback0
+  !
+  neighbor 192.168.0.1 remote-as 10
+  neighbor 192.168.0.1 description rr client Seattle
+  neighbor 192.168.0.1 update-source Loopback0
+  ! ibgp peers
+  !
+  neighbor 192.168.0.2 remote-as 10
+  neighbor 192.168.0.2 description iBGP peer Atlanta
+  neighbor 192.168.0.2 update-source Loopback0
+!
+! ebgp
+  !
+  neighbor 10.0.0.10 remote-as 20
+  neighbor 10.0.0.10 description eBGP to London
+  !
+  neighbor 10.1.128.2 remote-as 20
+  neighbor 10.1.128.2 description eBGP to Paris
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.4 mask 255.255.255.255
+  network 10.0.0.0 mask 255.255.255.240
+  network 10.0.0.16 mask 255.255.255.252
+  network 10.0.128.0 mask 255.255.255.240
+  network 10.1.0.12 mask 255.255.255.252
+  network 10.1.128.0 mask 255.255.255.252
+  neighbor 192.168.0.2 activate
+  neighbor 192.168.0.2 next-hop-self
+  neighbor 192.168.0.3 activate
+  neighbor 192.168.0.3 next-hop-self
+  neighbor 192.168.0.3 route-reflector-client
+  neighbor 192.168.0.5 activate
+  neighbor 192.168.0.5 next-hop-self
+  neighbor 192.168.0.5 route-reflector-client
+  neighbor 192.168.0.1 activate
+  neighbor 192.168.0.1 next-hop-self
+  neighbor 192.168.0.1 route-reflector-client
+  neighbor 10.0.0.10 activate
+  neighbor 10.0.0.10 send-community
+  neighbor 10.0.0.10 next-hop-self
+  neighbor 10.1.128.2 activate
+  neighbor 10.1.128.2 send-community
+  neighbor 10.1.128.2 next-hop-self
+ exit-address-family
+!
+!
+ip route 10.0.0.0 255.255.255.240 Null0 254
+ip route 10.0.0.16 255.255.255.252 Null0 254
+ip route 10.0.128.0 255.255.255.240 Null0 254
+ip route 10.1.0.12 255.255.255.252 Null0 254
+ip route 10.1.128.0 255.255.255.252 Null0 254
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.0.0.1" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.0.128.1" netPrefixLenV4="30"/>
+        <interface id="2" name="GigabitEthernet0/3" ipv4="10.0.128.13" netPrefixLenV4="30"/>
+        <interface id="3" name="GigabitEthernet0/4" ipv4="10.0.0.5" netPrefixLenV4="30"/>
+        <interface id="4" name="GigabitEthernet0/5" ipv4="10.1.128.1" netPrefixLenV4="30"/>
+        <interface id="5" name="GigabitEthernet0/6" ipv4="10.0.0.9" netPrefixLenV4="30"/>
+    </node>
+    <node name="London" type="SIMPLE" subtype="IOSv" location="408,97" ipv4="192.168.0.9">
+        <extensions>
+            <entry key="AutoNetkit.ASN" type="Integer">20</entry>
+            <entry key="AutoNetkit.RR_cluster" type="String">2.2.2.2</entry>
+            <entry key="AutoNetkit.ibgp_role" type="String">RR</entry>
+            <entry key="AutoNetkit.IGP" type="String">ospf</entry>
+            <entry key="config" type="string">! IOS Config generated on 2016-01-21 21:11
+! by autonetkit_0.20.9
+!
+hostname London
+boot-start-marker
+boot-end-marker
+!
+vrf definition Mgmt-intf
+!
+ address-family ipv4
+ exit-address-family
+ !
+ address-family ipv6
+ exit-address-family
+!
+!
+!
+no aaa new-model
+!
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+!
+service timestamps debug datetime msec
+service timestamps log datetime msec
+no service password-encryption
+no service config
+enable password cisco
+ip classless
+ip subnet-zero
+no ip domain lookup
+ip domain name virl.info
+crypto key generate rsa modulus 768
+ip ssh server algorithm authentication password
+username cisco privilege 15 secret cisco
+line vty 0 4
+ transport input ssh telnet
+ exec-timeout 720 0
+ password cisco
+ login local
+line con 0
+ password cisco
+!
+no cdp run
+!
+!
+interface Loopback0
+  description Loopback
+  ip address 192.168.0.9 255.255.255.255
+!
+interface GigabitEthernet0/0
+  description OOB Management
+  vrf forwarding Mgmt-intf
+  ! Configured on launch
+  no ip address
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/1
+  description to Atlanta
+  ip address 10.0.0.14 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/2
+  description to Boston
+  ip address 10.0.0.10 255.255.255.252
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/3
+  description to Berlin
+  ip address 10.1.0.6 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/4
+  description to Vienna
+  ip address 10.1.0.25 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/5
+  description to Milan
+  ip address 10.1.0.10 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+interface GigabitEthernet0/6
+  description to Paris
+  ip address 10.1.0.1 255.255.255.252
+  ip ospf cost 1
+  duplex full
+  speed auto
+  no shutdown
+!
+!
+!
+router ospf 20
+  network 192.168.0.9 0.0.0.0 area 0
+  log-adjacency-changes
+  passive-interface Loopback0
+  network 10.1.0.4 0.0.0.3 area 21
+  network 10.1.0.24 0.0.0.3 area 22
+  network 10.1.0.8 0.0.0.3 area 23
+  network 10.1.0.0 0.0.0.3 area 0
+!
+!
+router bgp 20
+  bgp router-id 192.168.0.9
+  no synchronization
+! ibgp
+  ! ibgp clients
+  !
+  neighbor 192.168.0.12 remote-as 20
+  neighbor 192.168.0.12 description rr client Berlin
+  neighbor 192.168.0.12 update-source Loopback0
+  !
+  neighbor 192.168.0.13 remote-as 20
+  neighbor 192.168.0.13 description rr client Milan
+  neighbor 192.168.0.13 update-source Loopback0
+  !
+  neighbor 192.168.0.10 remote-as 20
+  neighbor 192.168.0.10 description rr client Vienna
+  neighbor 192.168.0.10 update-source Loopback0
+  ! ibgp peers
+  !
+  neighbor 192.168.0.11 remote-as 20
+  neighbor 192.168.0.11 description iBGP peer Paris
+  neighbor 192.168.0.11 update-source Loopback0
+!
+! ebgp
+  !
+  neighbor 10.0.0.13 remote-as 10
+  neighbor 10.0.0.13 description eBGP to Atlanta
+  !
+  neighbor 10.0.0.9 remote-as 10
+  neighbor 10.0.0.9 description eBGP to Boston
+!
+!
+ !
+ address-family ipv4
+  network 192.168.0.9 mask 255.255.255.255
+  network 10.1.0.0 mask 255.255.255.248
+  network 10.1.0.8 mask 255.255.255.252
+  network 10.1.0.16 mask 255.255.255.248
+  network 10.1.0.24 mask 255.255.255.252
+  network 10.1.128.4 mask 255.255.255.252
+  neighbor 192.168.0.11 activate
+  neighbor 192.168.0.11 next-hop-self
+  neighbor 192.168.0.12 activate
+  neighbor 192.168.0.12 next-hop-self
+  neighbor 192.168.0.12 route-reflector-client
+  neighbor 192.168.0.13 activate
+  neighbor 192.168.0.13 next-hop-self
+  neighbor 192.168.0.13 route-reflector-client
+  neighbor 192.168.0.10 activate
+  neighbor 192.168.0.10 next-hop-self
+  neighbor 192.168.0.10 route-reflector-client
+  neighbor 10.0.0.13 activate
+  neighbor 10.0.0.13 send-community
+  neighbor 10.0.0.13 next-hop-self
+  neighbor 10.0.0.9 activate
+  neighbor 10.0.0.9 send-community
+  neighbor 10.0.0.9 next-hop-self
+ exit-address-family
+!
+!
+ip route 10.1.0.0 255.255.255.248 Null0 254
+ip route 10.1.0.8 255.255.255.252 Null0 254
+ip route 10.1.0.16 255.255.255.248 Null0 254
+ip route 10.1.0.24 255.255.255.252 Null0 254
+ip route 10.1.128.4 255.255.255.252 Null0 254
+!
+end
+</entry>
+            <entry key="AutoNetkit.mgmt_ip" type="string"></entry>
+        </extensions>
+        <interface id="0" name="GigabitEthernet0/1" ipv4="10.0.0.14" netPrefixLenV4="30"/>
+        <interface id="1" name="GigabitEthernet0/2" ipv4="10.0.0.10" netPrefixLenV4="30"/>
+        <interface id="2" name="GigabitEthernet0/3" ipv4="10.1.0.6" netPrefixLenV4="30"/>
+        <interface id="3" name="GigabitEthernet0/4" ipv4="10.1.0.25" netPrefixLenV4="30"/>
+        <interface id="4" name="GigabitEthernet0/5" ipv4="10.1.0.10" netPrefixLenV4="30"/>
+        <interface id="5" name="GigabitEthernet0/6" ipv4="10.1.0.1" netPrefixLenV4="30"/>
+    </node>
+    <connection dst="/virl:topology/virl:node[9]/virl:interface[1]" src="/virl:topology/virl:node[1]/virl:interface[1]"/>
+    <connection dst="/virl:topology/virl:node[2]/virl:interface[1]" src="/virl:topology/virl:node[9]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[4]/virl:interface[1]" src="/virl:topology/virl:node[2]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[3]/virl:interface[1]" src="/virl:topology/virl:node[4]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[9]/virl:interface[3]" src="/virl:topology/virl:node[3]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[4]/virl:interface[3]" src="/virl:topology/virl:node[9]/virl:interface[4]"/>
+    <connection dst="/virl:topology/virl:node[1]/virl:interface[2]" src="/virl:topology/virl:node[4]/virl:interface[4]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[1]" src="/virl:topology/virl:node[9]/virl:interface[5]"/>
+    <connection dst="/virl:topology/virl:node[10]/virl:interface[1]" src="/virl:topology/virl:node[4]/virl:interface[5]"/>
+    <connection dst="/virl:topology/virl:node[9]/virl:interface[6]" src="/virl:topology/virl:node[10]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[2]" src="/virl:topology/virl:node[4]/virl:interface[6]"/>
+    <connection dst="/virl:topology/virl:node[6]/virl:interface[1]" src="/virl:topology/virl:node[10]/virl:interface[3]"/>
+    <connection dst="/virl:topology/virl:node[7]/virl:interface[1]" src="/virl:topology/virl:node[10]/virl:interface[4]"/>
+    <connection dst="/virl:topology/virl:node[8]/virl:interface[1]" src="/virl:topology/virl:node[10]/virl:interface[5]"/>
+    <connection dst="/virl:topology/virl:node[7]/virl:interface[2]" src="/virl:topology/virl:node[5]/virl:interface[3]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[4]" src="/virl:topology/virl:node[10]/virl:interface[6]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[5]" src="/virl:topology/virl:node[8]/virl:interface[2]"/>
+    <connection dst="/virl:topology/virl:node[5]/virl:interface[6]" src="/virl:topology/virl:node[6]/virl:interface[2]"/>
+</topology>
