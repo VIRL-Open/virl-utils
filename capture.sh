@@ -2,13 +2,8 @@
 # 
 # Create a named pipe and attach the output of a remote
 # tcpdump to it (running on the VIRL host). Would require
-# the correct tap interface as a parameter.
-# Use the list.py script to identify tap interfaces of
-# running instances.
+# the correct TCP port the live capture is listening on.
 # 
-# Ideally, the ssh will use a key to login to make this
-# seamless.
-#
 # Open Wireshark and create a pipe interface via
 # 'Capture Options' -> 'Manage Interfaces' -> 'New Pipe'
 # and point it to /tmp/remotecapture.fifo
@@ -18,13 +13,11 @@
 #
 
 if [ $# == 0 ]; then
-  echo "tap interface name not provided"
+  echo "port number not provided"
   exit
 fi
 
-HOST=172.16.1.1
-PORT=22
-USER=virl
+HOST=172.16.1.254
 FIFO=/tmp/remotecapture.fifo
 
 # make sure fifo exists
@@ -34,9 +27,9 @@ if ! [ -p $FIFO ]; then
 fi
 
 # make sure the param is indeed a tap interface
-if [[ "$1" =~ ^tap[0-9a-f]{8}-[0-9a-f]{2}$ ]]; then
-  /usr/bin/ssh -n >$FIFO -p $PORT $USER@$HOST sudo stdbuf -o0 tcpdump -w- -s0 -vni $1 
+if [[ "$1" =~ ^[0-9]+$ ]]; then
+  /usr/bin/nc >$FIFO $HOST $1
 else
-  echo "$1 does not look like a tap interface"
+	echo "$1 does not look like a port number"
 fi
 
