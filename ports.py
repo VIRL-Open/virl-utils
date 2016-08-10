@@ -23,8 +23,8 @@ def main():
 	# Sample output / field mapping
 	# </guest/endpoint>-<Sample_Topologies@single-server-WO9N_h>-<csr1000v-1>
 	#		  USER		  PROJECT		   TOPOLOGY			NODE
-    # </guest/endpoint>-<kk-gE8P2J>-<server-3>
-	prog=re.compile(r'</(.*)/endpoint>-<(.*)-[0-9a-z]+>-<(.*)>', re.IGNORECASE)
+        # </guest/endpoint>-<kk-gE8P2J>-<server-3>
+	prog=re.compile(r'</(.*)/endpoint>-<(.*)(-[0-9a-z]+)?>-<(.*)>', re.IGNORECASE)
 
 	# table=list()
 	try:
@@ -60,7 +60,7 @@ def main():
 				# get the instance name
 				name=doc.getElementsByTagName('name')[0].childNodes[0].nodeValue
 				# add info to table
-				pt.add_row([m.group(1), m.group(2), m.group(3), port, console, name])
+				pt.add_row([m.group(1), m.group(2), m.group(4), port, console, name])
 
 	print pt.get_string(sortby="Topology")
 
