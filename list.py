@@ -7,13 +7,15 @@
 # The tap interfaces can then be used to do a traffic
 # capture locally using tcpdump
 #
+# v0.5 18-Feb-2017
+# - adjusted to Mitaka
 # v0.4 20-Jan-2016
 # - added capability to select columns from table
-# v0.3 02-Dec-2015 
+# v0.3 02-Dec-2015
 # - changed regex to work with webeditor topologies (w/o 6-digit random id)
 # - added IP column for non-infrastructure ports
 # - changed 'user' to 'project' because it is
-# v0.2 02-Dec-2015 
+# v0.2 02-Dec-2015
 # adapted to Kilo release
 # v0.1 24-Nov-2014
 # initial release
@@ -21,11 +23,18 @@
 # rschmied@cisco.com
 #
 
-import sys, re, os, prettytable, argparse
-from neutronclient.v2_0 import client
+import sys
+import re
+import os
+import prettytable
+import argparse
 from operator import itemgetter
 
-# </guest/endpoint>-<triangle-ghU06c>-<iosv-2>-<guest> 
+from keystoneauth1 import identity, session
+from neutronclient.v2_0 import client
+
+
+# </guest/endpoint>-<triangle-ghU06c>-<iosv-2>-<guest>
 # </guest/endpoint>-<trunk>-<lxc-2>-<iosvl2-1-to-lxc-2>
 # </guest/endpoint>-<triangle-ghU06c>-<~mgmt-lxc>-<~lxc-flat>
 # </guest/endpoint>-<jjj>-<~mgmt-lxc>-<~lxc-flat>
@@ -45,74 +54,83 @@ def hyphen_range(s):
     """
     for x in s.split(','):
         elem = x.split('-')
-        if len(elem) == 1: # a number
+        if len(elem) == 1:  # a number
             yield int(elem[0])
-        elif len(elem) == 2: # a range inclusive
+        elif len(elem) == 2:  # a range inclusive
             start, end = map(int, elem)
-            for i in xrange(start, end+1):
+            for i in xrange(start, end + 1):
                 yield i
-        else: # more than one hyphen
+        else:  # more than one hyphen
             raise ValueError('format error in %s' % x)
 
+
 def list_taps(project, fields):
-	out = {}
+    out = {}
 
-	nc = client.Client(username=os.environ['OS_USERNAME'], password=os.environ['OS_PASSWORD'],
-		tenant_name=os.environ['OS_TENANT_NAME'], auth_url=os.environ['OS_SERVICE_ENDPOINT'])
+    auth = identity.Password(auth_url=os.environ['OS_SERVICE_ENDPOINT'],
+                         username=os.environ['OS_USERNAME'],
+                         password=os.environ['OS_PASSWORD'],
+                         project_name=os.environ['OS_PROJECT_NAME'],
+                         project_domain_id=os.environ['OS_PROJECT_DOMAIN_ID'],
+                         user_domain_id=os.environ['OS_USER_DOMAIN_ID'])
+    sess = session.Session(auth=auth)
+    nc = client.Client(session=sess)
 
-	prog = re.compile(r'</('+project+')/endpoint>-<(.*)(?:-\w{6})?>-<(.*)>-<(.*)>')
-	ports = nc.list_ports()
-	for thisport in ports['ports']:
-		m = prog.match(thisport['name'])
-		if m:
-			project, topo, node, connection = m.group(1), m.group(2), m.group(3), m.group(4)
-			if not project in out:
-				out[project] = {}
-			if not topo in out[project]:
-				out[project][topo] = []
-			if connection == project:
-				tmp = 'Management Network'
-			else:
-				tmp = connection
-			ip = thisport['fixed_ips'][0]['ip_address']
-			if ip in ['10.255.255.1', '10.255.255.2']:
-				ip = ''
-			out[project][topo].append({'id': thisport['id'], 
-				'from': node, 'to': tmp, 'mac': thisport['mac_address'], 'ip': ip})
+    prog = re.compile(
+        r'</(' + project + ')/endpoint>-<(.*)(?:-\w{6})?>-<(.*)>-<(.*)>')
+    ports = nc.list_ports()
+    for thisport in ports['ports']:
+        m = prog.match(thisport['name'])
+        if m:
+            project, topo, node, connection = m.group(
+                1), m.group(2), m.group(3), m.group(4)
+            if not project in out:
+                out[project] = {}
+            if not topo in out[project]:
+                out[project][topo] = []
+            if connection == project:
+                tmp = 'Management Network'
+            else:
+                tmp = connection
+            ip = thisport['fixed_ips'][0]['ip_address']
+            if ip in ['10.255.255.1', '10.255.255.2']:
+                ip = ''
+            out[project][topo].append({'id': thisport['id'],
+                'from': node, 'to': tmp, 'mac': thisport['mac_address'], 'ip': ip})
 
-	pt = prettytable.PrettyTable(["Project", "Topology", "Node", "Link", "Interface", "MAC Address", "IP Address"])
-	pt.align = "l"
-	
-	for project in out:
-		projectname = project
-		for topo in out[project]:
-			toponame = topo
-			out[project][topo].sort(key=itemgetter('from'))
-			for port in out[project][topo]:
-				pt.add_row([projectname, toponame, port['from'], 
-					port['to'], "tap" + port['id'][0:11], port['mac'], port['ip']])
-				if len(toponame) > 0:
-					toponame = ""
-					projectname = ""
+    pt = prettytable.PrettyTable(
+        ["Project", "Topology", "Node", "Link", "Interface", "MAC Address", "IP Address"])
+    pt.align = "l"
+
+    for project in out:
+        projectname = project
+        for topo in out[project]:
+            toponame = topo
+            out[project][topo].sort(key=itemgetter('from'))
+            for port in out[project][topo]:
+                pt.add_row([projectname, toponame, port['from'],
+                    port['to'], "tap" + port['id'][0:11], port['mac'], port['ip']])
+                if len(toponame) > 0:
+                    toponame = ""
+                    projectname = ""
         columns = pt.field_names
         if fields:
             columns = []
             for i in list(hyphen_range(fields)):
-                columns.append(pt.field_names[i-1])
-	print pt.get_string(fields = columns)
-	return 0
+                columns.append(pt.field_names[i - 1])
+    print pt.get_string(fields=columns)
+    return 0
 
 
 def main():
         parser = argparse.ArgumentParser()
-        parser.add_argument('project', default = '.*', nargs = '?', 
-			help = "project name to list, all projects if ommited")
-        parser.add_argument('--columns', '-c', 
-			help = "list of column numbers to print. like 1,2,4-7")
+        parser.add_argument('project', default='.*', nargs='?',
+            help="project name to list, all projects if ommited")
+        parser.add_argument('--columns', '-c',
+            help="list of column numbers to print. like 1,2,4-7")
         args = parser.parse_args()
-	return list_taps(args.project, args.columns)
+    return list_taps(args.project, args.columns)
 
 
 if __name__ == '__main__':
-	sys.exit(main())
-
+    sys.exit(main())
