@@ -56,8 +56,7 @@ def link(mac, state):
                              username=os.environ['OS_USERNAME'],
                              password=os.environ['OS_PASSWORD'],
                              project_name=os.environ['OS_PROJECT_NAME'],
-                             project_domain_id=os.environ[
-                                 'OS_PROJECT_DOMAIN_ID'],
+                             project_domain_id=os.environ['OS_PROJECT_DOMAIN_ID'],
                              user_domain_id=os.environ['OS_USER_DOMAIN_ID'])
     sess = session.Session(auth=auth)
     nc = client.Client(session=sess)

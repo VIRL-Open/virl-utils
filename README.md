@@ -1,6 +1,11 @@
 virl-utils
 ==========
 
+
+> **Note:** The latest version works with the upcoming 1.3 release of VIRL which uses OpenStack Mitaka. When using older, OpenStack Kilo based releases of VIRL (older than 1.3, like 1.2.83) one has to use the older script versions.  
+> Use the Kilo specific version by checking out the repo using `git clone -b kilo https://github.com/VIRL-Open/virl-utils.git`.
+
+
 Tools for working with VIRL. This is a loose collection of scripts that maybe useful when working with VIRL. Some in Python, some in Bash and even one for Windows. Here's a brief list of the scripts and what they are supposed to do. YMMV :)
 
 For some of the tools it is required / useful to have a specific environment set and that the virl user is member of the libvirtd group:

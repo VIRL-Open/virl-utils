@@ -32,10 +32,9 @@ def main():
     # </guest/endpoint>-<Sample_Topologies@single-server-WO9N_h>-<csr1000v-1>
     #         USER        PROJECT          TOPOLOGY         NODE
     # </guest/endpoint>-<kk-gE8P2J>-<server-3>
-    prog = re.compile(
-        r'</(.*)/endpoint>-<(.*)(-[0-9a-z]+)?>-<(.*)>', re.IGNORECASE)
+    prog = re.compile(r'</(.*)/endpoint>-<(.*)(-[0-9a-z]+)?>-<(.*)>', re.IGNORECASE)
 
-    # table=list()
+    # table = list()
     try:
         libvirt_uri = os.environ['LIBVIRT_DEFAULT_URI']
     except:
@@ -48,8 +47,7 @@ def main():
                              username=os.environ['OS_USERNAME'],
                              password=os.environ['OS_PASSWORD'],
                              project_name=os.environ['OS_PROJECT_NAME'],
-                             project_domain_id=os.environ[
-                                 'OS_PROJECT_DOMAIN_ID'],
+                             project_domain_id=os.environ['OS_PROJECT_DOMAIN_ID'],
                              user_domain_id=os.environ['OS_USER_DOMAIN_ID'])
     sess = session.Session(auth=auth)
     nc = client.Client('2', session=sess)
@@ -69,18 +67,15 @@ def main():
             else:
                 doc = parseString(domain.XMLDesc(flags=0))
                 # get the VNC port
-                port = doc.getElementsByTagName(
-                    'graphics')[0].getAttribute('port')
+                port = doc.getElementsByTagName('graphics')[0].getAttribute('port')
                 # get the serial console TCP port
                 for i in doc.getElementsByTagName('source'):
                     if i.parentNode.nodeName == u'console':
                         console = i.getAttribute('service')
                 # get the instance name
-                name = doc.getElementsByTagName(
-                    'name')[0].childNodes[0].nodeValue
+                name = doc.getElementsByTagName('name')[0].childNodes[0].nodeValue
                 # add info to table
-                pt.add_row([m.group(1), m.group(
-                    2), m.group(4), port, console, name])
+                pt.add_row([m.group(1), m.group(2), m.group(4), port, console, name])
 
     print pt.get_string(sortby="Topology")
 

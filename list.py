@@ -68,11 +68,11 @@ def list_taps(project, fields):
     out = {}
 
     auth = identity.Password(auth_url=os.environ['OS_SERVICE_ENDPOINT'],
-                         username=os.environ['OS_USERNAME'],
-                         password=os.environ['OS_PASSWORD'],
-                         project_name=os.environ['OS_PROJECT_NAME'],
-                         project_domain_id=os.environ['OS_PROJECT_DOMAIN_ID'],
-                         user_domain_id=os.environ['OS_USER_DOMAIN_ID'])
+                             username=os.environ['OS_USERNAME'],
+                             password=os.environ['OS_PASSWORD'],
+                             project_name=os.environ['OS_PROJECT_NAME'],
+                             project_domain_id=os.environ['OS_PROJECT_DOMAIN_ID'],
+                             user_domain_id=os.environ['OS_USER_DOMAIN_ID'])
     sess = session.Session(auth=auth)
     nc = client.Client(session=sess)
 
@@ -96,7 +96,9 @@ def list_taps(project, fields):
             if ip in ['10.255.255.1', '10.255.255.2']:
                 ip = ''
             out[project][topo].append({'id': thisport['id'],
-                'from': node, 'to': tmp, 'mac': thisport['mac_address'], 'ip': ip})
+                                       'from': node, 'to': tmp, 
+                                       'mac': thisport['mac_address'], 
+                                       'ip': ip})
 
     pt = prettytable.PrettyTable(
         ["Project", "Topology", "Node", "Link", "Interface", "MAC Address", "IP Address"])
@@ -108,8 +110,11 @@ def list_taps(project, fields):
             toponame = topo
             out[project][topo].sort(key=itemgetter('from'))
             for port in out[project][topo]:
-                pt.add_row([projectname, toponame, port['from'],
-                    port['to'], "tap" + port['id'][0:11], port['mac'], port['ip']])
+                pt.add_row([projectname, toponame,
+                            port['from'],
+                            port['to'], "tap" + port['id'][0:11],
+                            port['mac'],
+                            port['ip']])
                 if len(toponame) > 0:
                     toponame = ""
                     projectname = ""
@@ -123,12 +128,12 @@ def list_taps(project, fields):
 
 
 def main():
-        parser = argparse.ArgumentParser()
-        parser.add_argument('project', default='.*', nargs='?',
-            help="project name to list, all projects if ommited")
-        parser.add_argument('--columns', '-c',
-            help="list of column numbers to print. like 1,2,4-7")
-        args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('project', default='.*', nargs='?',
+                        help="project name to list, all projects if ommited")
+    parser.add_argument('--columns', '-c',
+                        help="list of column numbers to print. like 1,2,4-7")
+    args = parser.parse_args()
     return list_taps(args.project, args.columns)
 
 

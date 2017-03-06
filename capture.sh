@@ -30,6 +30,6 @@ fi
 if [[ "$1" =~ ^[0-9]+$ ]]; then
   /usr/bin/nc >$FIFO $HOST $1
 else
-	echo "$1 does not look like a port number"
+  echo "$1 does not look like a port number"
 fi
 
