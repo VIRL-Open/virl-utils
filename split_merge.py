@@ -1,9 +1,26 @@
+#!/usr/bin/env python
+
+#
 # Copyright (c) 2014, Cisco
 #
-# Permission to use, copy, modify, and/or distribute this software for any purpose with or without fee is hereby granted, provided that the above copyright notice and this permission notice appear in all copies.
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
 #
-# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-# Version 0.1, written 23-12-14 by simknigh@cisco.com
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+# OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+#
+# Version 0.2, written 08-06-17
+#   added --remove to remove configs from .virl file when extracting
+#
+# Version 0.1, written 23-12-14 by
+# simknigh@cisco.com
+#
 
 
 import sys
@@ -16,6 +33,8 @@ If the second argument is .virl then it will merge the configs in the first fold
 The folder to write into must exist.
 
 By default it will try for a file extension of folder/name.cfg where name is the node name in the .virl file, and folder is the second argument. The default extension is .cfg and can be set using the --extension argument.
+
+When specifying --remove, configurations will be cleared in the .virl file when extracting configurations.
 
 Extracting:
     $ python split_merge.py  project@mixed-A1fWuP.virl cfgs
@@ -40,11 +59,14 @@ Caveats:
 """
 
 import argparse
-parser = argparse.ArgumentParser(description=description, formatter_class=RawTextHelpFormatter)
+parser = argparse.ArgumentParser(
+    description=description, formatter_class=RawTextHelpFormatter)
 parser.add_argument("source", help="Source to extract or merge from")
 parser.add_argument("target", help="Target to extract or merge to")
 parser.add_argument(
-    "-f", dest="force", help="Force overwrite of existing config files", action='store_true')
+    "--remove", "-r", dest="remove", help="Remove configs from .virl file", action='store_true')
+parser.add_argument(
+    "--force", "-f", dest="force", help="Force overwrite of existing config files", action='store_true')
 parser.add_argument(
     "--extension", help="Extension to use for config files", default='cfg')
 args = parser.parse_args()
@@ -81,6 +103,7 @@ def main():
     ET.register_namespace("virl", "http://www.cisco.com/VIRL")
     virl_ns = "{http://www.cisco.com/VIRL}"
 
+    updated = False
     nodes = root.findall("{0}node".format(virl_ns))
     for node in nodes:
         name = node.get("name")
@@ -112,13 +135,15 @@ def main():
                 config_elem.text = fh.read()
             print "Merged %s into %s" % (node_cfg_filename, name)
 
-        if action == "extract":
+        if action == "extract" and config_elem.text is not None:
             with open(node_cfg_filename, "w") as fh:
                 fh.write(config_elem.text)
-
+            if args.remove:
+                config_elem.text = ''
+                updated = True
             print "Extracted %s into %s" % (name, node_cfg_filename)
 
-    if action == "merge":
+    if action == "merge" or action == "extract" and args.remove and updated:
         root.write(virl_file, xml_declaration=True, encoding='UTF-8')
         print "Wrote updated %s" % virl_file
 
