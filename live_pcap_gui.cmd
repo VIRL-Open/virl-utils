@@ -6,19 +6,23 @@ REM Thank you to user Flex from our Support community for creating the initial b
 REM Thank you to rschmeid@cisco.com for your continued input and fun bits. 
 REM 
 REM Make sure that you have installed zenmap (https://nmap.org/zenmap/) on your system. 
-REM original post is here: http://community.dev-innovate.com/t/script-to-enable-remote-live-packet-captures-using-windows/4414
+REM
+REM Adapted by: alegalle@cisco.com
+REM Last Modified: Sep 5, 2017
+REM
 
-TITLE VIRL Live Packet Capture
+TITLE VIRL Live PCap
 MODE con:cols=80 lines=12
 COLOR 1F
 
 set NETCAT_PATH=%PROGRAMFILES(x86)%\Nmap\ncat.exe
 set WIRESHARK_PATH=%PROGRAMFILES%\Wireshark\Wireshark.exe
 echo.
-set /P VIRL_HOST="VIRL Server IP: "
-set /P PCAP_PORT="Live port: "
+set /P VIRL_HOST="VIRL PE IP: "
+set /P PCAP_PORT="Live Port : "
 
 echo.
-echo Reading live capture from port %PCAP_PORT%. Close this window to stop capture!
+echo Reading live pCap from port %PCAP_PORT%.
+echo Close this window to stop capture!
 echo.
 "%NETCAT_PATH%" %VIRL_HOST% %PCAP_PORT% | "%WIRESHARK_PATH%" -k -i -
