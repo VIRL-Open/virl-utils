@@ -18,25 +18,25 @@
 trap int_exit INT
 function int_exit
 {
-        echo "${PROGNAME}: Aborted by user"
-        exit
+echo "${PROGNAME}: Aborted by user"
+exit
 }
 
 update_cloud_init() {
-	apt-get install cloud-init -y
+apt-get install cloud-init -y
 
-	if [ $? -ne 0 ]; then
-		echo "ERROR: Installation failed due to cloud-init."
-        exit 1
-	fi
+if [ $? -ne 0 ]; then
+    echo "ERROR: Installation failed due to cloud-init."
+    exit 1
+fi
 
 # reconfigure cloud-init, user interaction needed
-    dpkg-reconfigure cloud-init
+dpkg-reconfigure cloud-init
 
 # save patch for cloud.cfg
-    rm /tmp/cloud-cfg.patch >& /dev/null
-    touch /tmp/cloud-cfg.patch
-    cat >> /tmp/cloud-cfg.patch << EOF
+rm /tmp/cloud-cfg.patch >& /dev/null
+touch /tmp/cloud-cfg.patch
+cat >> /tmp/cloud-cfg.patch << EOF
 --- cloud.cfg	2015-11-18 10:08:06.389556900 +0100
 +++ cloud2.cfg	2015-11-18 10:10:37.177824900 +0100
 @@ -91,3 +91,4 @@
@@ -46,14 +46,14 @@ update_cloud_init() {
 +         security: http://security.debian.org/
 EOF
 
-	# apply patch to cloud.cfg, adds security repository
-	patch /etc/cloud/cloud.cfg < /tmp/cloud-cfg.patch
+# apply patch to cloud.cfg, adds security repository
+patch /etc/cloud/cloud.cfg < /tmp/cloud-cfg.patch
 
-	# export sbin to path for tools usage in topologies
-	echo "export PATH=\"\$PATH:/sbin\"" >> /etc/bash.bashrc
-	ln -s /sbin/ifconfig /bin/ifconfig
-	ln -s /sbin/route /bin/route
-	ln -s /sbin/dhclient /bin/dhclient
+# export sbin to path for tools usage in topologies
+echo "export PATH=\"\$PATH:/sbin\"" >> /etc/bash.bashrc
+ln -s /sbin/ifconfig /bin/ifconfig
+ln -s /sbin/route /bin/route
+ln -s /sbin/dhclient /bin/dhclient
 }
 
 change_rc(){
@@ -71,9 +71,9 @@ EOF
 }
 
 add_kali_repositories(){
-	# replace old /etc/apt/sources.list
-	mv /etc/apt/sources.list /etc/apt/sources.list.orig
-	touch /etc/apt/sources.list
+# replace old /etc/apt/sources.list
+mv /etc/apt/sources.list /etc/apt/sources.list.orig
+touch /etc/apt/sources.list
 cat >> /etc/apt/sources.list << EOF
 # Kali repositories
 # Based on Kali 2016.1 release
@@ -82,9 +82,9 @@ deb http://http.kali.org/kali kali-rolling main contrib non-free
 # deb-src http://http.kali.org/kali kali-rolling main contrib non-free
 EOF
 
-	apt-key adv --keyserver pgp.mit.edu --recv-keys ED444FF07D8D0BF6
-	apt-get clean
-	apt-get update -m
+apt-key adv --keyserver pgp.mit.edu --recv-keys ED444FF07D8D0BF6
+apt-get clean
+apt-get update -m
 }
 
 install_tools(){
@@ -96,9 +96,9 @@ cat<<-EOF
 
 EOF
 sleep 2
-	apt-get update --fix-missing
-	apt-get upgrade -y
-	apt-get dist-upgrade -y
+apt-get update --fix-missing
+apt-get upgrade -y
+apt-get dist-upgrade -y
 cat<<-EOF
 
 **********************************
@@ -107,28 +107,28 @@ cat<<-EOF
 
 EOF
 sleep 2
-	apt-get install kali-linux-full -y
+apt-get install kali-linux-full -y
 }
 
 enable_ssh(){
-	rm /etc/ssh/ssh_host_*
-	dpkg-reconfigure openssh-server
-	if [ $? -ne 0 ]; then
-		echo "ERROR: Installation failed. Cannot reconfigure openssh-server."
-		exit 1
-	fi
-	service ssh restart
-	count="$(ps aux | grep -c sshd)"
+rm /etc/ssh/ssh_host_*
+dpkg-reconfigure openssh-server
+if [ $? -ne 0 ]; then
+    echo "ERROR: Installation failed. Cannot reconfigure openssh-server."
+    exit 1
+fi
+service ssh restart
+count="$(ps aux | grep -c sshd)"
 
-	if [ $count -lt 2 ]; then
-		echo "ERROR: Installation failed, ssh daemon not running."
-		exit 1
-	fi
+if [ $count -lt 2 ]; then
+    echo "ERROR: Installation failed, ssh daemon not running."
+    exit 1
+fi
 }
 
 clean_disk() {
-	dd if=/dev/zero of=/mytempfile
-	rm /mytempfile
+dd if=/dev/zero of=/mytempfile
+rm /mytempfile
 }
 
 echo "

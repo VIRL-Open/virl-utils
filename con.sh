@@ -12,5 +12,5 @@
 gateway=$(ip route | \
   awk '/^default / {for(i=0;i<NF;i++) {if ($i=="dev") {print $(i+1);next;}}}')
 
-telnet -e $(ifconfig $gateway | sed -rn 's/.*r:([^ ]+) .*/\1/p') $1
+telnet -e $(ifconfig $gateway | sed -rn 's/.*r:([^ ]+) .*/\1/p') $1
 

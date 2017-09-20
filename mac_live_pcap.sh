@@ -42,16 +42,16 @@ exit 1
 
 int_exit ()
 {
-	rm $FIFO
-	echo "${PROGNAME}: Aborted by user"
-	exit
+rm $FIFO
+echo "${PROGNAME}: Aborted by user"
+exit
 }
 
 term_exit ()
 {
-	rm $FIFO
-	echo "${PROGNAME}: Terminated"
-	exit
+rm $FIFO
+echo "${PROGNAME}: Terminated"
+exit
 }
 
 # script start
