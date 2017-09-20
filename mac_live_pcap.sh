@@ -23,13 +23,14 @@
 # (don't forget to save the pipe interface)
 #
 # modified by: alegalle@cisco.com
-# last modified: Sept 14, 2017
+# last modified: Sept 20, 2017
 # ****************************************************************
 
 # Default location of Wireshark
 wpcap=/usr/local/bin/wireshark
 
-_usage () {
+_usage()
+{
 cat <<EOF
 
     Wireshark does not appear to be installed in its default location. Ensure
@@ -40,21 +41,22 @@ EOF
 exit 1
 }
 
-int_exit ()
+int_exit()
 {
 rm $FIFO
-echo "${PROGNAME}: Aborted by user"
+echo -e "${PROGNAME}: Aborted by user!\n"
 exit
 }
 
-term_exit ()
+term_exit()
 {
 rm $FIFO
-echo "${PROGNAME}: Terminated"
+echo -e "\n${PROGNAME}: Terminated!\n"
 exit
 }
 
 # script start
+PROGNAME=$(basename $0)
 trap int_exit INT
 trap term_exit TERM HUP
 
